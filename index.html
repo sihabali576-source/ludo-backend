@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LUDO PARTY - PRO AI EDITION</title>
+    <!-- Socket.io Library for Real-time Multiplayer -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        /* --- CSS VARIABLES & BASIC SETUP --- */
+        :root {
+            --ludo-red: #B71C1C; 
+            --ludo-green: #1B5E20; 
+            --ludo-yellow: #F9A825; 
+            --ludo-blue: #0D47A1; 
+            --ludo-red-light: #ffcdd2;
+            --ludo-green-light: #c8e6c9;
+            --ludo-yellow-light: #fff9c4;
+            --ludo-blue-light: #bbdefb;
+            --bg-color: #263238;
+            --board-border: #1a1a1a;
+        }
+
+        body {
+            font-family: 'SolaimanLipi', 'Arial', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            color: white;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            background-color: #0d3b66; 
+            background-image: 
+                linear-gradient(rgba(0, 0, 0, 0.2) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.2) 2px, transparent 2px),
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 80px 80px, 80px 80px, 20px 20px, 20px 20px;
+            background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 10;
+        }
+
+        /* --- UI COMPONENTS --- */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .logo-title {
+            font-size: 4.5rem;
+            font-weight: 900;
+            line-height: 0.9;
+            letter-spacing: -2px;
+            margin: 0;
+            text-transform: uppercase;
+            background: linear-gradient(to bottom, #FFD700 20%, #F9A825 50%, #B8860B 80%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.8));
+        }
+
+        .logo-subtitle {
+            font-size: 1.2rem;
+            letter-spacing: 8px;
+            color: #FFD700;
+            text-transform: uppercase;
+            font-weight: 300;
+            margin-top: 5px;
+            opacity: 0.9;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .dice-game-text {
+            display: block;
+            font-size: 0.9rem;
+            letter-spacing: 4px;
+            color: #fff;
+            margin-top: 15px;
+            opacity: 0.7;
+            font-weight: bold;
+        }
+        
+        .menu-btn {
+            width: 85%;
+            max-width: 280px;
+            padding: 16px 20px;
+            margin: 12px 0;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: white;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3), inset 0 2px 2px rgba(255,255,255,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: 0.5s;
+        }
+
+        .menu-btn:hover::after { left: 100%; }
+
+        .btn-online {
+            background: linear-gradient(135deg, #1e88e5, #1565c0);
+            border-bottom: 4px solid #0d47a1;
+        }
+
+        .btn-offline {
+            background: linear-gradient(135deg, #43a047, #2e7d32);
+            border-bottom: 4px solid #1b5e20;
+        }
+
+        .menu-btn:active {
+            transform: translateY(2px);
+            border-bottom: 0px solid transparent;
+        }
+
+        /* --- LOGIN & DASHBOARD STYLES --- */
+        #screen-login, #screen-register, #screen-reg-success, #screen-online-select {
+            background-color: #1565C0;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        #screen-dashboard, #screen-bet, #screen-searching {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
+            background-image: none !important;
+        }
+
+        #screen-profile {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364) !important;
+        }
+
+        .login-box {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 320px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .login-title {
+            color: #FFD700;
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 25px;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .login-input:focus {
+            border-color: #FFD700;
+        }
+
+        .eye-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #aaa;
+            width: 20px;
+            height: 20px;
+        }
+
+        .btn-yellow {
+            width: 100%;
+            padding: 14px;
+            background: #FFD700;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 16px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #F9A825;
+            margin-bottom: 10px;
+            transition: transform 0.1s;
+        }
+
+        .btn-yellow:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        .login-link {
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 15px;
+            opacity: 0.9;
+            cursor: pointer;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 20;
+        }
+
+        /* --- SETUP SCREEN (OFFLINE) --- */
+        .setup-container {
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            width: 90%;
+            max-width: 400px;
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .player-mode-selector {
+            display: flex;
+            background: rgba(255,255,255,0.1);
+            border-radius: 30px;
+            padding: 5px;
+            margin-bottom: 25px;
+            width: 100%;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 25px;
+            font-weight: bold;
+            color: #aaa;
+            transition: all 0.3s;
+        }
+        .mode-btn.active {
+            background: #fff;
+            color: #0d3b66;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .player-list { width: 100%; display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; }
+        .player-item {
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(255,255,255,0.1); padding: 10px 15px; border-radius: 12px;
+        }
+        .player-info { display: flex; align-items: center; gap: 10px; }
+        .player-avatar { width: 30px; height: 30px; border-radius: 50%; border: 2px solid white; }
+        .player-name { font-weight: bold; font-size: 1.1rem; }
+        
+        .toggle-switch {
+            width: 40px; height: 22px; background: #ccc; border-radius: 20px;
+            position: relative; cursor: pointer; transition: background 0.3s;
+        }
+        .toggle-switch.active { background: var(--ludo-green); }
+        .toggle-knob {
+            width: 18px; height: 18px; background: white; border-radius: 50%;
+            position: absolute; top: 2px; left: 2px; transition: transform 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .toggle-switch.active .toggle-knob { transform: translateX(18px); }
+
+        .bot-option {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 100%; background: rgba(0,0,0,0.3); padding: 12px 20px;
+            border-radius: 15px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .bot-label { font-size: 1.1rem; font-weight: 800; color: #FFD700; text-transform: uppercase; }
+
+        .bottom-nav {
+            position: absolute; bottom: 20px; display: flex; gap: 30px;
+        }
+        .nav-icon {
+            width: auto; padding: 5px 15px; background: rgba(255,255,255,0.1);
+            border-radius: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; color: rgba(255,255,255,0.7);
+        }
+
+        /* --- SUCCESS BOX --- */
+        .success-box {
+            background: white; padding: 40px; border-radius: 20px;
+            text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: popIn 0.4s ease-out;
+        }
+        .success-icon { font-size: 5rem; color: var(--ludo-green); margin-bottom: 20px; display: block; }
+        .success-text { color: #333; font-size: 1.5rem; font-weight: bold; margin-bottom: 30px; }
+
+        /* --- DASHBOARD --- */
+        .dashboard-box {
+            background: rgba(0,0,0,0.4); border-radius: 20px;
+            width: 90%; max-width: 350px; padding: 20px; text-align: center;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .balance-card {
+            background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin-bottom: 20px;
+        }
+        .balance-label { font-size: 0.9rem; color: #ccc; letter-spacing: 1px; }
+        .balance-amount { font-size: 2.5rem; font-weight: 900; color: #FFD700; margin: 5px 0; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
+        
+        .dash-options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .dash-btn {
+            background: white; color: #1565C0; border: none; padding: 15px 5px;
+            border-radius: 10px; font-weight: 800; font-size: 0.9rem; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .dash-btn:active { transform: scale(0.95); }
+
+        .online-btn {
+            width: 100%; background: white; color: #1565C0; border: none;
+            padding: 20px; margin: 10px 0; border-radius: 15px; font-size: 1.3rem;
+            font-weight: 900; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .online-btn:active { transform: scale(0.98); }
+
+        /* --- PROFILE --- */
+        .profile-info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.1); padding: 12px 15px;
+            border-radius: 10px; margin-bottom: 10px; text-align: left;
+        }
+        .profile-label { color: #aaa; font-size: 0.9rem; }
+        .profile-value { color: #fff; font-weight: bold; font-size: 1rem; }
+
+        /* --- BETTING SCREEN --- */
+        .bet-container {
+            width: 90%; max-width: 380px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 30px 20px;
+            border-radius: 25px;
+            text-align: center;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5), inset 0 0 20px rgba(255, 215, 0, 0.1);
+            position: relative; overflow: hidden;
+        }
+        .bet-container::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.05), transparent);
+            pointer-events: none; animation: shine 6s infinite linear;
+        }
+        @keyframes shine { 0%{transform: rotate(0deg);} 100%{transform: rotate(360deg);} }
+
+        .bet-header { font-size: 1.2rem; color: #FFD700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; font-weight: 700; }
+        .bet-subtext { color: #a0c4ff; font-size: 0.9rem; margin-bottom: 20px; }
+        
+        .amount-display-wrapper {
+            background: rgba(0,0,0,0.6); border-radius: 15px; padding: 15px;
+            margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); position: relative;
+        }
+        .currency-symbol { font-size: 1.2rem; color: #FFD700; margin-right: 5px; }
+        .amount-display { font-size: 2.2rem; color: white; font-weight: 800; font-family: 'Segoe UI', sans-serif; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        
+        .bet-input-box {
+            width: 100%; background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 10px;
+            padding: 8px 15px; font-size: 1.1rem; text-align: center; color: #fff;
+            font-weight: bold; outline: none; margin-bottom: 15px; transition: 0.3s;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2); height: 45px; line-height: 45px;
+            box-sizing: border-box;
+        }
+        .bet-input-box:focus { background: rgba(255, 255, 255, 0.15); border-color: #FFD700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+
+        .bet-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 20px; }
+        .bet-chip {
+            background: linear-gradient(135deg, #2b2b2b, #1a1a1a); border: 1px solid rgba(255, 215, 0, 0.3);
+            color: #FFD700; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem;
+            font-weight: bold; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .bet-chip:hover { background: #FFD700; color: #000; transform: translateY(-2px); }
+        .bet-limits { display: flex; justify-content: space-between; color: rgba(255,255,255,0.5); font-size: 0.75rem; margin-bottom: 20px; font-weight: 500; padding: 0 10px; }
+
+        /* --- SEARCHING SCREEN --- */
+        .search-container { text-align: center; }
+        .spinner {
+            width: 80px; height: 80px; border: 8px solid rgba(255,255,255,0.1);
+            border-top: 8px solid #FFD700; border-radius: 50%; margin: 0 auto 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .searching-text { font-size: 1.8rem; font-weight: bold; color: #fff; margin-bottom: 10px; }
+        .searching-timer { font-size: 1.2rem; color: #aaa; }
+
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        /* --- GAME BOARD & TOKENS --- */
+        #game-screen { background-color: transparent; position: relative; } 
+        
+        #game-container {
+            position: relative; width: 90vmin; height: 90vmin;
+            max-width: 680px; max-height: 680px; background: white;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6); border-radius: 8px;
+            padding: 0; box-sizing: border-box; border: 4px solid #333;
+        }
+
+        #ludo-board { width: 100%; height: 100%; display: block; }
+
+        .player-hub {
+            position: absolute; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; width: 55px; height: 55px;
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px);
+            border-radius: 50%; border: 2px solid rgba(255,255,255,0.4);
+            z-index: 100; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            padding: 0; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .player-hub.active-player {
+            pointer-events: auto; background: rgba(255, 255, 255, 0.3);
+            border-color: gold; box-shadow: 0 0 15px gold; z-index: 101;
+        }
+
+        #hub-red { top: 100px; left: 40px; }
+        #hub-green { top: 100px; right: 40px; }
+        #hub-yellow { bottom: 100px; right: 40px; }
+        #hub-blue { bottom: 100px; left: 40px; }
+
+        .dice-container {
+            width: 45px; height: 45px; background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%); 
+            border-radius: 12px; display: flex; justify-content: center; align-items: center;
+            cursor: pointer; transition: transform 0.1s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.8);
+            border: 1px solid #ccc; position: relative;
+        }
+
+        .dice-container:active { transform: scale(0.95); }
+
+        #hub-red.active-player { animation: slideDown 0.8s infinite alternate ease-in-out; }
+        #hub-green.active-player { animation: slideDown 0.8s infinite alternate ease-in-out; }
+        #hub-yellow.active-player { animation: slideUp 0.8s infinite alternate ease-in-out; }
+        #hub-blue.active-player { animation: slideUp 0.8s infinite alternate ease-in-out; }
+
+        @keyframes slideDown { 0% { transform: translateY(0); } 100% { transform: translateY(8px); } }
+        @keyframes slideUp { 0% { transform: translateY(0); } 100% { transform: translateY(-8px); } }
+
+        .dice-face svg { width: 100%; height: 100%; }
+        .dot { fill: #333; }
+        .dot-red { fill: var(--ludo-red); }
+
+        .token-group { cursor: pointer; transition: all 0.2s ease; }
+        .token-highlight { animation: tokenPulse 0.8s infinite; transform-origin: center; }
+
+        @keyframes tokenPulse {
+            0% { transform: scale(1) translate(0, 0); }
+            50% { transform: scale(1.15) translate(0, -2px); }
+            100% { transform: scale(1) translate(0, 0); }
+        }
+
+        /* --- MODALS & OVERLAYS --- */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); justify-content: center; align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white; color: #333; padding: 30px; border-radius: 20px;
+            text-align: center; min-width: 300px; max-width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn { from{transform: scale(0.5); opacity: 0;} to{transform: scale(1); opacity: 1;} }
+
+        #message-overlay {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.85); color: #fff; padding: 12px 25px;
+            border-radius: 30px; font-size: 1.2rem; pointer-events: none;
+            opacity: 0; transition: opacity 0.3s; z-index: 500; white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* --- Transaction History --- */
+        .tx-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.05); padding: 10px 12px; border-radius: 10px;
+            margin-bottom: 8px; font-size: 0.85rem;
+        }
+        .tx-left { display: flex; flex-direction: column; }
+        .tx-type { font-weight: bold; }
+        .tx-time { font-size: 0.7rem; color: #666; }
+        .tx-amount { font-weight: bold; }
+        .tx-credit { color: #2e7d32; }
+        .tx-debit { color: #c62828; }
+    </style>
+</head>
+<body>
+
+    <!-- Main Menu Screen -->
+    <div id="screen-main" class="screen" style="display: flex;">
+        <div class="logo-container">
+            <h1 class="logo-title">LUDO</h1>
+            <div class="logo-subtitle">PARTY</div>
+            <span class="dice-game-text">PRO AI EDITION</span>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+            <button class="menu-btn btn-online" onclick="goToLogin()">PLAY ONLINE</button>
+            <button class="menu-btn btn-offline" onclick="goToSetup()">PLAY OFFLINE</button>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-icon">About</div>
+            <div class="nav-icon" onclick="showMessage('Share copied!')">Share</div>
+            <div class="nav-icon" onclick="location.reload()">Exit</div>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="screen-login" class="screen">
+        <button class="back-btn" onclick="showScreen('screen-main')">← Back</button>
+        
+        <div class="login-box">
+            <h2 class="login-title">LUDO PARTY</h2>
+            
+            <div class="input-group">
+                <input type="tel" id="login-mobile" class="login-input" placeholder="+880 / 017...">
+            </div>
+            
+            <div class="input-group">
+                <input type="password" id="login-pass" class="login-input" placeholder="Enter password">
+                <svg class="eye-icon" onclick="togglePassword('login-pass')" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            </div>
+            
+            <button class="btn-yellow" onclick="handleLogin()">Login</button>
+            <div class="login-link" onclick="goToRegister()">Don't have an account? Register</div>
+        </div>
+    </div>
+
+    <!-- Register Screen -->
+    <div id="screen-register" class="screen">
+        <button class="back-btn" onclick="goToLogin()">← Back</button>
+        
+        <div class="login-box">
+            <h2 class="login-title">LUDO PARTY</h2>
+            
+            <div class="input-group">
+                <input type="text" id="reg-name" class="login-input" placeholder="FULL NAME">
+            </div>
+            
+            <div class="input-group">
+                <input type="tel" id="reg-mobile" class="login-input" placeholder="+880 / 017...">
+            </div>
+            
+            <div class="input-group">
+                <input type="email" id="reg-email" class="login-input" placeholder="EMAIL">
+            </div>
+
+            <div class="input-group">
+                <input type="password" id="reg-pass" class="login-input" placeholder="PASSWORD">
+                <svg class="eye-icon" onclick="togglePassword('reg-pass')" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            </div>
+            
+            <div class="input-group">
+                <input type="password" id="reg-pass-conf" class="login-input" placeholder="CONFIRM PASSWORD">
+                <svg class="eye-icon" onclick="togglePassword('reg-pass-conf')" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+            </div>
+            
+            <button class="btn-yellow" onclick="handleRegister()">Register</button>
+            <div class="login-link" onclick="goToLogin()">Already have an account? Login</div>
+        </div>
+    </div>
+
+    <!-- Register Success Screen -->
+    <div id="screen-reg-success" class="screen">
+        <div class="success-box">
+            <span class="success-icon">✓</span>
+            <h2 class="success-text">সফল হয়েছে!</h2>
+            <p style="color:#666; margin-bottom: 25px;">আপনার একাউন্ট তৈরি সম্পন্ন হয়েছে।</p>
+            <button class="btn-yellow" onclick="goToLogin()">LOGIN করুন</button>
+        </div>
+    </div>
+
+    <!-- Dashboard Screen -->
+    <div id="screen-dashboard" class="screen">
+        <button class="back-btn" onclick="goHome()">Log Out</button>
+        
+        <div class="dashboard-box">
+            <div class="balance-card">
+                <div class="balance-label">TOTAL BALANCE</div>
+                <div class="balance-amount" id="wallet-balance">৳ 0</div>
+            </div>
+
+            <div class="dash-options">
+                <button class="dash-btn" onclick="openDeposit()">DEPOSIT</button>
+                <button class="dash-btn" onclick="openWithdraw()">WITHDRAW</button>
+                <button class="dash-btn" onclick="refreshWalletUI()">BALANCE</button>
+                <button class="dash-btn" onclick="goToProfile()">PROFILE</button>
+            </div>
+
+            <button class="online-btn" onclick="goToBetScreen(2)">2 TWO PLAYERS</button>
+            <button class="online-btn" onclick="goToBetScreen(3)">3 THREE PLAYERS</button>
+            <button class="online-btn" onclick="goToBetScreen(4)">4 FOUR PLAYERS</button>
+        </div>
+    </div>
+
+    <!-- Professional Bet Screen -->
+    <div id="screen-bet" class="screen">
+        <button class="back-btn" onclick="showScreen('screen-dashboard')">← Back</button>
+        
+        <div class="bet-container">
+            <div class="bet-header">Set Your Bet</div>
+            <div class="bet-subtext" id="bet-mode-text">2 Players Match</div>
+            
+            <div class="amount-display-wrapper">
+                <span class="currency-symbol">৳</span>
+                <span class="amount-display" id="bet-amount-display">100</span>
+            </div>
+            
+            <div class="bet-chips">
+                <div class="bet-chip" onclick="setBetValue(100)">৳ 100</div>
+                <div class="bet-chip" onclick="setBetValue(500)">৳ 500</div>
+                <div class="bet-chip" onclick="setBetValue(1000)">৳ 1K</div>
+                <div class="bet-chip" onclick="setBetValue(2000)">৳ 2K</div>
+                <div class="bet-chip" onclick="setBetValue(5000)">৳ 5K</div>
+            </div>
+
+            <input type="number" id="bet-input" class="bet-input-box" min="100" max="5000" value="100" placeholder="Type Amount">
+            
+            <div class="bet-limits">
+                <span>MIN: 100</span>
+                <span>MAX: 5000</span>
+            </div>
+
+            <button class="menu-btn btn-online" onclick="confirmBet()">START MATCH</button>
+        </div>
+    </div>
+
+    <!-- New: Searching Screen -->
+    <div id="screen-searching" class="screen">
+        <div class="search-container">
+            <div class="spinner"></div>
+            <div class="searching-text">প্লেয়ার খুঁজছে...</div>
+            <div class="searching-timer">Time remaining: <span id="search-timer">30</span>s</div>
+            <p style="color: #aaa; margin-top: 15px; font-size: 0.9rem;">Connecting to server...</p>
+        </div>
+    </div>
+
+    <!-- Profile Screen -->
+    <div id="screen-profile" class="screen">
+        <button class="back-btn" onclick="showScreen('screen-dashboard')">← Back</button>
+        
+        <div class="dashboard-box">
+            <h2 style="color: #FFD700; margin-bottom: 20px; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">MY PROFILE</h2>
+            
+            <div class="profile-info-row">
+                <span class="profile-label">FULL NAME</span>
+                <span class="profile-value" id="profile-name">Loading...</span>
+            </div>
+
+            <div class="profile-info-row">
+                <span class="profile-label">EMAIL</span>
+                <span class="profile-value" id="profile-email">Loading...</span>
+            </div>
+
+            <div class="profile-info-row">
+                <span class="profile-label">MOBILE NUMBER</span>
+                <span class="profile-value" id="profile-mobile">Loading...</span>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <button class="menu-btn btn-online" onclick="showTransactionStory()">TRANSACTION STORY</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Setup Screen (Offline) -->
+    <div id="screen-setup" class="screen">
+        <h2 style="margin-bottom: 20px; color: #ffeb3b; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">SELECT PLAYERS</h2>
+        
+        <div class="setup-container">
+            <div class="player-mode-selector">
+                <div class="mode-btn active" onclick="setMode(2)" id="mode-2p">2P</div>
+                <div class="mode-btn" onclick="setMode(3)" id="mode-3p">3P</div>
+                <div class="mode-btn" onclick="setMode(4)" id="mode-4p">4P</div>
+            </div>
+
+            <div class="bot-option">
+                <span class="bot-label">PLAY WITH BOT (AI)</span>
+                <div class="toggle-switch" id="switch-bot" onclick="toggleBotMode()">
+                    <div class="toggle-knob"></div>
+                </div>
+            </div>
+
+            <div class="player-list">
+                <div class="player-item" id="item-p1">
+                    <div class="player-info">
+                        <div class="player-avatar" style="background: var(--ludo-red);"></div>
+                        <span class="player-name">Player 01</span>
+                    </div>
+                    <div class="toggle-switch active" id="switch-p1"><div class="toggle-knob"></div></div>
+                </div>
+
+                <div class="player-item" id="item-p2">
+                    <div class="player-info">
+                        <div class="player-avatar" style="background: var(--ludo-green);"></div>
+                        <span class="player-name">Player 02</span>
+                    </div>
+                    <div class="toggle-switch active" id="switch-p2"><div class="toggle-knob"></div></div>
+                </div>
+
+                <div class="player-item" id="item-p3">
+                    <div class="player-info">
+                        <div class="player-avatar" style="background: var(--ludo-yellow);"></div>
+                        <span class="player-name">Player 03</span>
+                    </div>
+                    <div class="toggle-switch active" id="switch-p3"><div class="toggle-knob"></div></div>
+                </div>
+
+                <div class="player-item" id="item-p4">
+                    <div class="player-info">
+                        <div class="player-avatar" style="background: var(--ludo-blue);"></div>
+                        <span class="player-name">Player 04</span>
+                    </div>
+                    <div class="toggle-switch active" id="switch-p4"><div class="toggle-knob"></div></div>
+                </div>
+            </div>
+
+            <button class="menu-btn btn-offline" style="font-size: 1.5rem;" onclick="startGameFromSetup()">PLAY</button>
+        </div>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div id="game-container">
+            <svg id="ludo-board" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <radialGradient id="gold" cx="30%" cy="30%">
+                      <stop offset="0%" stop-color="#fff3b0"/>
+                      <stop offset="60%" stop-color="#ffcc33"/>
+                      <stop offset="100%" stop-color="#c98a00"/>
+                    </radialGradient>
+                    <g id="coin">
+                      <ellipse cx="0" cy="80" rx="75" ry="25" fill="rgba(0,0,0,0.3)" />
+                      <circle cx="0" cy="0" r="75" fill="rgba(0,0,0,0.2)"/> <circle cx="0" cy="0" r="70" fill="url(#gold)"/>
+                      <circle cx="0" cy="0" r="55" fill="var(--fill)" stroke="rgba(0,0,0,0.3)" stroke-width="2"/>
+                      <path d="M-35 20 L-25 -20 L0 -5 L25 -20 L35 20 Z" fill="#ffd700" stroke="#b8860b" stroke-width="4"/>
+                    </g>
+                </defs>
+            </svg>
+        </div>
+        <div id="message-overlay">মেসেজ</div>
+        <button onclick="goHome()" style="position: absolute; top: 10px; right: 10px; padding: 8px 15px; background: rgba(0,0,0,0.5); color: white; border: 1px solid white; border-radius: 5px; z-index: 200;">✕</button>
+    </div>
+
+    <div id="win-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="win-title">অভিনন্দন!</h2>
+            <p id="win-message">আপনি জিতেছেন।</p>
+            <button class="btn-green" style="background: var(--ludo-green); color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 5px;" onclick="resetGame()">আবার খেলুন</button>
+            <button class="btn-red" style="background: var(--ludo-red); color: white; padding: 10px 20px; border: none; border-radius: 5px; margin: 5px;" onclick="goHome()">মেনুতে ফিরুন</button>
+        </div>
+    </div>
+
+    <!-- Transaction History Modal -->
+    <div id="tx-modal" class="modal">
+        <div class="modal-content" style="max-width:360px; padding:20px;">
+            <h2 style="margin-top:0; color:#1565C0;">Transaction History</h2>
+            <div id="tx-list" style="max-height:300px; overflow-y:auto; text-align:left; margin:15px 0;"></div>
+            <button class="btn-yellow" onclick="closeTxModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Deposit / Withdraw Modal -->
+    <div id="dw-modal" class="modal">
+        <div class="modal-content" style="max-width:360px; padding:20px;">
+            <h2 id="dw-title" style="margin-top:0; color:#1565C0;">Deposit</h2>
+            <input type="number" id="dw-amount" placeholder="Enter amount" style="width:100%; padding:12px; margin:15px 0; border-radius:8px; border:1px solid #ccc; font-size:1rem;" />
+            <p id="dw-hint" style="font-size:0.75rem; color:#777;">Min: ৳100 | Max: ৳10,000</p>
+            <button class="btn-yellow" onclick="submitDW()">Confirm</button>
+            <button class="btn-yellow" style="margin-top:8px; background:#ccc;" onclick="closeDW()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        /* =========================================
+           1. CONFIG & STATE
+           ========================================= */
+        const API_URL = "https://ludo-backend-902x.onrender.com/api"; // Your Backend URL
+        
+        let selectedPlayerCount = 2;
+        let isBotMode = false;
+        let HUMAN_COLOR = 'yellow'; 
+        
+        let currentUserID = "guest_" + Date.now();
+        let authToken = localStorage.getItem('ludo_auth_token');
+        let socket = null;
+
+        let currentBetAmount = 100;
+        let selectedOnlinePlayers = 2;
+        let searchTimerInterval;
+
+        /* =========================================
+           2. UI NAVIGATION
+           ========================================= */
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+            document.getElementById(screenId).style.display = 'flex';
+        }
+
+        function goToLogin() { showScreen('screen-login'); }
+        function goToRegister() { showScreen('screen-register'); }
+
+        function togglePassword(inputId) {
+            const x = document.getElementById(inputId);
+            if (x.type === "password") x.type = "text"; else x.type = "password";
+        }
+
+        function formatPhoneNumber(input) {
+            let cleaned = ('' + input).replace(/\D/g, '');
+            if (cleaned.startsWith('0')) return '88' + cleaned;
+            if (cleaned.startsWith('88')) return cleaned;
+            if (cleaned.length > 0) return '88' + cleaned;
+            return cleaned;
+        }
+
+        /* =========================================
+           3. AUTHENTICATION (BACKEND CONNECTED)
+           ========================================= */
+        async function handleLogin() {
+            const mobileInput = document.getElementById('login-mobile').value;
+            const pass = document.getElementById('login-pass').value.trim();
+            const mobile = formatPhoneNumber(mobileInput);
+            
+            if (mobile.length !== 13) { showMessage("সঠিক মোবাইল নম্বর দিন!"); return; }
+            if (!pass) { showMessage("পাসওয়ার্ড দিন!"); return; }
+
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ mobile, password: pass })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    authToken = data.token;
+                    currentUserID = data.user._id || mobile;
+                    localStorage.setItem('ludo_auth_token', authToken);
+                    localStorage.setItem('ludo_user_id', currentUserID);
+                    
+                    // Save profile locally for quick access
+                    localStorage.setItem('ludo_user_profile_' + currentUserID, JSON.stringify(data.user));
+                    
+                    showMessage("লগইন সফল হয়েছে!");
+                    initSocket(); // Connect to Socket
+                    setTimeout(() => {
+                        refreshWalletUI();
+                        showScreen('screen-dashboard');
+                    }, 1000);
+                } else {
+                    showMessage(data.message || "Login failed");
+                }
+            } catch (err) {
+                console.error(err);
+                showMessage("Server connection error!");
+            }
+        }
+
+        async function handleRegister() {
+            const mobileInput = document.getElementById('reg-mobile').value;
+            const pass = document.getElementById('reg-pass').value;
+            const confPass = document.getElementById('reg-pass-conf').value;
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const mobile = formatPhoneNumber(mobileInput);
+
+            if (!mobile || mobile.length !== 13) { showMessage("সঠিক মোবাইল নম্বর দিন"); return; }
+            if (pass !== confPass) { showMessage("পাসওয়ার্ড মিলছে না"); return; }
+
+            try {
+                const response = await fetch(`${API_URL}/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, mobile, email, password: pass })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage("রেজিস্ট্রেশন সফল হয়েছে!");
+                    showScreen('screen-reg-success');
+                } else {
+                    showMessage(data.message || "Registration failed");
+                }
+            } catch (err) {
+                console.error(err);
+                showMessage("Server error!");
+            }
+        }
+
+        /* =========================================
+           4. SOCKET.IO CONNECTION (REALTIME)
+           ========================================= */
+        function initSocket() {
+            if (!authToken) return;
+            
+            // Connect to Render backend
+            socket = io("https://ludo-backend-902x.onrender.com", {
+                auth: { token: authToken }
+            });
+
+            socket.on('connect', () => {
+                console.log("Connected to Server:", socket.id);
+            });
+
+            socket.on('connect_error', (err) => {
+                console.log("Socket Connection Failed, falling back to AI");
+                // If server socket fails, we will simulate online with AI
+            });
+            
+            // Example: Receive opponent move
+            socket.on('game_move', (data) => {
+                // Handle incoming move from opponent
+                console.log("Opponent moved:", data);
+            });
+            
+            socket.on('match_found', (data) => {
+                // When a match is found
+                console.log("Match Found:", data);
+                if(searchTimerInterval) clearInterval(searchTimerInterval);
+                startGame('online', selectedOnlinePlayers);
+                showScreen('game-screen');
+            });
+        }
+
+        /* =========================================
+           5. WALLET & BETTING SYSTEM
+           ========================================= */
+        const OnlineWallet = {
+            key() { return 'ludo_wallet_' + currentUserID; },
+
+            load() {
+                const data = localStorage.getItem(this.key());
+                if (data) return JSON.parse(data);
+                const fresh = { balance: 0, transactions: [] };
+                localStorage.setItem(this.key(), JSON.stringify(fresh));
+                return fresh;
+            },
+
+            save(wallet) {
+                localStorage.setItem(this.key(), JSON.stringify(wallet));
+            },
+
+            getBalance() {
+                return this.load().balance;
+            },
+
+            refreshFromServer: async function() {
+                if (!authToken) return;
+                try {
+                    const res = await fetch(`${API_URL}/user/me`, {
+                        headers: { 'Authorization': `Bearer ${authToken}` }
+                    });
+                    const data = await res.json();
+                    if(data.success && data.user) {
+                        const wallet = this.load();
+                        wallet.balance = data.user.balance || 0;
+                        this.save(wallet);
+                        refreshWalletUI();
+                    }
+                } catch(e) { console.log("Could not sync balance"); }
+            },
+
+            addTransaction(type, amount, note = '') {
+                const wallet = this.load();
+                wallet.transactions.unshift({ type, amount, note, time: new Date().toLocaleString() });
+                this.save(wallet);
+            },
+
+            deposit(amount) {
+                const wallet = this.load();
+                wallet.balance += amount;
+                this.addTransaction('DEPOSIT', amount, 'Deposit');
+                this.save(wallet);
+            },
+
+            lockBet(amount) {
+                const wallet = this.load();
+                if (wallet.balance < amount) return false;
+                wallet.balance -= amount;
+                this.addTransaction('BET', amount, 'Match started');
+                this.save(wallet);
+                return true;
+            },
+
+            win(amount) {
+                const wallet = this.load();
+                wallet.balance += amount; // Return bet + profit logic handled externally usually, here simple double
+                this.addTransaction('WIN', amount, 'Match win');
+                this.save(wallet);
+            },
+            
+            history() { return this.load().transactions; }
+        };
+
+        function refreshWalletUI() {
+            const el = document.getElementById('wallet-balance');
+            if (el) el.innerText = '৳ ' + OnlineWallet.getBalance();
+        }
+
+        /* =========================================
+           6. GAME FLOW LOGIC
+           ========================================= */
+        function goHome() {
+            if (OnlineMatchLock.isLocked()) {
+                showMessage("Match চলাকালীন বের হওয়া যাবে না!");
+                return;
+            }
+            if(searchTimerInterval) clearInterval(searchTimerInterval);
+            document.getElementById('win-modal').style.display = 'none';
+            showScreen('screen-main');
+        }
+
+        function goToSetup() {
+            showScreen('screen-setup');
+            setMode(2); 
+        }
+
+        function goToProfile() {
+            showScreen('screen-profile');
+            const savedData = localStorage.getItem('ludo_user_profile_' + currentUserID);
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                document.getElementById('profile-name').innerText = data.name || 'N/A';
+                document.getElementById('profile-email').innerText = data.email || 'N/A';
+                document.getElementById('profile-mobile').innerText = data.mobile || 'N/A';
+            } else {
+                document.getElementById('profile-name').innerText = 'Guest User';
+            }
+        }
+
+        function showTransactionStory() {
+            const list = document.getElementById('tx-list');
+            list.innerHTML = '';
+            const tx = OnlineWallet.history();
+            if (!tx.length) { list.innerHTML = '<p style="text-align:center; color:#777;">No transactions found</p>'; }
+            else {
+                tx.forEach(t => {
+                    const isCredit = (t.type === 'DEPOSIT' || t.type === 'WIN');
+                    const row = document.createElement('div');
+                    row.className = 'tx-item';
+                    row.innerHTML = `
+                        <div class="tx-left"><span class="tx-type">${t.type}</span><span class="tx-time">${t.time}</span></div>
+                        <div class="tx-amount ${isCredit ? 'tx-credit' : 'tx-debit'}">${isCredit ? '+' : '-'}৳${t.amount}</div>`;
+                    list.appendChild(row);
+                });
+            }
+            document.getElementById('tx-modal').style.display = 'flex';
+        }
+
+        function closeTxModal() { document.getElementById('tx-modal').style.display = 'none'; }
+
+        /* --- BETTING --- */
+        function goToBetScreen(count) {
+            selectedOnlinePlayers = count;
+            document.getElementById('bet-mode-text').innerText = `${count} Players Match`;
+            document.getElementById('bet-input').value = 100;
+            updateBetDisplay(100);
+            showScreen('screen-bet');
+        }
+
+        const betInput = document.getElementById('bet-input');
+        betInput.addEventListener('input', function() {
+            let val = parseInt(this.value);
+            if (isNaN(val)) val = 0;
+            updateBetDisplay(val);
+        });
+
+        function setBetValue(val) {
+            document.getElementById('bet-input').value = val;
+            updateBetDisplay(val);
+        }
+
+        function updateBetDisplay(val) {
+            document.getElementById('bet-amount-display').innerText = val;
+            currentBetAmount = val;
+        }
+
+        function confirmBet() {
+            const val = parseInt(document.getElementById('bet-input').value);
+            if (isNaN(val) || val < 100 || val > 5000) { showMessage("Bet must be between 100 and 5000"); return; }
+            
+            if (!OnlineWallet.lockBet(val)) { showMessage("পর্যাপ্ত ব্যালেন্স নেই!"); return; }
+
+            OnlineMatchLock.lock({ bet: val, mode: 'online', status: 'playing' });
+            currentBetAmount = val;
+            refreshWalletUI();
+            startSearching();
+        }
+
+        function startSearching() {
+            showScreen('screen-searching');
+            let timeLeft = 30;
+            const timerDisplay = document.getElementById('search-timer');
+            timerDisplay.innerText = timeLeft;
+
+            // EMIT SOCKET EVENT TO JOIN QUEUE
+            if(socket && socket.connected) {
+                socket.emit('join_queue', { bet: currentBetAmount, players: selectedOnlinePlayers });
+            }
+
+            searchTimerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(searchTimerInterval);
+                    // Fallback: If no match found via socket, play vs AI (simulated online)
+                    showMessage("No player found. Playing with Smart AI...");
+                    startGame('online', selectedOnlinePlayers);
+                    showScreen('game-screen');
+                }
+            }, 1000);
+        }
+
+        /* --- OFFLINE SETUP LOGIC --- */
+        function setMode(count) {
+            selectedPlayerCount = count;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`mode-${count}p`).classList.add('active');
+            for(let i=1; i<=4; i++) {
+                const item = document.getElementById(`item-p${i}`);
+                const sw = document.getElementById(`switch-p${i}`);
+                if(i <= count) { item.classList.remove('disabled'); sw.classList.add('active'); }
+                else { item.classList.add('disabled'); sw.classList.remove('active'); }
+            }
+        }
+
+        function toggleBotMode() {
+            isBotMode = !isBotMode;
+            const sw = document.getElementById('switch-bot');
+            sw.classList.toggle('active');
+            showMessage(isBotMode ? "Bot Mode Enabled!" : "Bot Mode Disabled!");
+        }
+
+        function startGameFromSetup() {
+            let mode = isBotMode ? 'vsAI' : 'offline';
+            startGame(mode, selectedPlayerCount);
+            showScreen('game-screen');
+        }
+
+        /* =========================================
+           7. GAME ENGINE (LOGIC + AI)
+           ========================================= */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+            if (type === 'move') { osc.frequency.setValueAtTime(300, audioCtx.currentTime); gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
+            else if (type === 'kill') { osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime); gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
+            else if (type === 'roll') { osc.type = 'triangle'; gainNode.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.05); osc.start(); osc.stop(audioCtx.currentTime + 0.05); }
+            else if (type === 'win') { osc.type = 'square'; osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.4); gainNode.gain.value = 0.2; osc.start(); osc.stop(audioCtx.currentTime + 1.0); }
+        }
+
+        const colors = ['red', 'green', 'yellow', 'blue'];
+        const colorNames = {'red': 'লাল', 'green': 'সবুজ', 'yellow': 'হলুদ', 'blue': 'নীল'};
+        let players = []; let playerTurnIndex = 0; let gameMode = 'offline'; let boardState = {}; 
+        let isRolling = false; let turnPhase = 'roll'; 
+        let consecutiveSixes = 0; let diceValue = 1;
+
+        const CELL_SIZE = 10;
+        const safeCells = [0, 8, 13, 21, 26, 34, 39, 47];
+
+        const mainPath = [
+            {x:1,y:6},{x:2,y:6},{x:3,y:6},{x:4,y:6},{x:5,y:6},{x:6,y:5},{x:6,y:4},{x:6,y:3},{x:6,y:2},{x:6,y:1},{x:6,y:0},{x:7,y:0},{x:8,y:0},
+            {x:8,y:1},{x:8,y:2},{x:8,y:3},{x:8,y:4},{x:8,y:5},{x:9,y:6},{x:10,y:6},{x:11,y:6},{x:12,y:6},{x:13,y:6},{x:14,y:6},{x:14,y:7},{x:14,y:8},
+            {x:13,y:8},{x:12,y:8},{x:11,y:8},{x:10,y:8},{x:9,y:8},{x:8,y:9},{x:8,y:10},{x:8,y:11},{x:8,y:12},{x:8,y:13},{x:8,y:14},{x:7,y:14},{x:6,y:14},
+            {x:6,y:13},{x:6,y:12},{x:6,y:11},{x:6,y:10},{x:6,y:9},{x:5,y:8},{x:4,y:8},{x:3,y:8},{x:2,y:8},{x:1,y:8},{x:0,y:8},{x:0,y:7},{x:0,y:6}
+        ];
+
+        const homePaths = {
+            red:    [{x:1,y:7},{x:2,y:7},{x:3,y:7},{x:4,y:7},{x:5,y:7},{x:6,y:7}],
+            green:  [{x:7,y:1},{x:7,y:2},{x:7,y:3},{x:7,y:4},{x:7,y:5},{x:7,y:6}],
+            yellow: [{x:13,y:7},{x:12,y:7},{x:11,y:7},{x:10,y:7},{x:9,y:7},{x:8,y:7}],
+            blue:   [{x:7,y:13},{x:7,y:12},{x:7,y:11},{x:7,y:10},{x:7,y:9},{x:7,y:8}]
+        };
+
+        const basePositions = {
+            red:    [{x:1.5,y:1.5},{x:1.5,y:3.5},{x:3.5,y:1.5},{x:3.5,y:3.5}],
+            green:  [{x:10.5,y:1.5},{x:10.5,y:3.5},{x:12.5,y:1.5},{x:12.5,y:3.5}],
+            yellow: [{x:10.5,y:10.5},{x:10.5,y:12.5},{x:12.5,y:10.5},{x:12.5,y:12.5}],
+            blue:   [{x:1.5,y:10.5},{x:1.5,y:12.5},{x:3.5,y:10.5},{x:3.5,y:12.5}]
+        };
+
+        const startIndices = { red: 0, green: 13, yellow: 26, blue: 39 };
+
+        function initBoard() {
+            const svg = document.getElementById('ludo-board');
+            svg.innerHTML = svg.querySelector('defs').outerHTML;
+            const bg = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            bg.setAttribute("width", "150"); bg.setAttribute("height", "150"); bg.setAttribute("fill", "#fff"); svg.appendChild(bg);
+            const largeBlocks = [{c: 'red', x:0, y:0}, {c: 'green', x:9, y:0}, {c: 'blue', x:0, y:9}, {c: 'yellow', x:9, y:9}];
+            largeBlocks.forEach(b => {
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("x", b.x * CELL_SIZE); rect.setAttribute("y", b.y * CELL_SIZE);
+                rect.setAttribute("width", 6 * CELL_SIZE); rect.setAttribute("height", 6 * CELL_SIZE);
+                rect.setAttribute("fill", `var(--ludo-${b.c})`); rect.setAttribute("stroke", "#333"); svg.appendChild(rect);
+                const inner = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                inner.setAttribute("x", (b.x + 1) * CELL_SIZE); inner.setAttribute("y", (b.y + 1) * CELL_SIZE);
+                inner.setAttribute("width", 4 * CELL_SIZE); inner.setAttribute("height", 4 * CELL_SIZE);
+                inner.setAttribute("fill", "#fff"); inner.setAttribute("rx", "2"); svg.appendChild(inner);
+            });
+            Object.entries(basePositions).forEach(([color, positions]) => {
+                positions.forEach(pos => {
+                    const spot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    spot.setAttribute("cx", (pos.x + 0.5) * CELL_SIZE); spot.setAttribute("cy", (pos.y + 0.5) * CELL_SIZE);
+                    spot.setAttribute("r", 4.5); spot.setAttribute("fill", "rgba(0,0,0,0.05)"); spot.setAttribute("stroke", "#ccc");
+                    spot.setAttribute("stroke-width", "0.5"); svg.appendChild(spot);
+                });
+            });
+            mainPath.forEach((pos, index) => {
+                let color = safeCells.includes(index) ? '#eee' : 'white';
+                if (index === 0) color = 'var(--ludo-red)'; if (index === 13) color = 'var(--ludo-green)';
+                if (index === 26) color = 'var(--ludo-yellow)'; if (index === 39) color = 'var(--ludo-blue)';
+                drawCell(svg, pos.x, pos.y, color);
+                if ([8, 21, 34, 47].includes(index)) drawStar(svg, pos.x, pos.y);
+            });
+            colors.forEach(c => homePaths[c].forEach(pos => drawCell(svg, pos.x, pos.y, `var(--ludo-${c})`)));
+            const cx = 75, cy = 75;
+            drawTriangle(svg, `60,60 60,90 ${cx},${cy}`, "var(--ludo-red)");
+            drawTriangle(svg, `60,60 90,60 ${cx},${cy}`, "var(--ludo-green)");
+            drawTriangle(svg, `90,60 90,90 ${cx},${cy}`, "var(--ludo-yellow)");
+            drawTriangle(svg, `60,90 90,90 ${cx},${cy}`, "var(--ludo-blue)");
+        }
+
+        function drawCell(svg, x, y, fill) {
+            const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            rect.setAttribute("x", x * CELL_SIZE); rect.setAttribute("y", y * CELL_SIZE);
+            rect.setAttribute("width", CELL_SIZE); rect.setAttribute("height", CELL_SIZE);
+            rect.setAttribute("fill", fill); rect.setAttribute("stroke", "#333"); rect.setAttribute("stroke-width", "0.5");
+            svg.appendChild(rect);
+        }
+
+        function drawStar(svg, x, y) {
+            const cx = (x + 0.5) * CELL_SIZE, cy = (y + 0.5) * CELL_SIZE;
+            const star = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+            star.setAttribute("points", "0,-3.5 1,-1 3.5,-1 1.5,0.5 2.5,3 0,1.5 -2.5,3 -1.5,0.5 -3.5,-1 -1,-1");
+            star.setAttribute("transform", `translate(${cx}, ${cy})`); star.setAttribute("fill", "black"); svg.appendChild(star);
+        }
+
+        function drawTriangle(svg, points, fill) {
+            const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+            poly.setAttribute("points", points); poly.setAttribute("fill", fill);
+            poly.setAttribute("stroke", "#333"); poly.setAttribute("stroke-width", "0.5"); svg.appendChild(poly);
+        }
+
+        function createDiceSVG(num) {
+            const dots = { 1:[[50,50]], 2:[[25,25],[75,75]], 3:[[25,25],[50,50],[75,75]], 4:[[25,25],[75,25],[25,75],[75,75]], 5:[[25,25],[75,25],[50,50],[25,75],[75,75]], 6:[[25,25],[75,25],[25,50],[75,50],[25,75],[75,75]] };
+            return `<svg viewBox="0 0 100 100">${dots[num].map(p => `<circle cx="${p[0]}%" cy="${p[1]}%" r="15%" class="dot ${num===1?'dot-red':''}" />`).join('')}</svg>`;
+        }
+
+        function startGame(mode, count) {
+            gameMode = mode; 
+            if (mode === 'vsAI') {
+                players = count === 2 ? ['red', 'yellow'] : count === 3 ? ['red', 'green', 'yellow'] : colors;
+            } else if (mode === 'online') {
+                // In online mode, user is usually Yellow (bottom right) or fixed. 
+                // Assuming 2 players: Red vs Yellow (Yellow is User).
+                // If 4 players: User is Yellow.
+                players = count === 2 ? ['red', 'yellow'] : count === 3 ? ['red', 'green', 'yellow'] : colors;
+            } else {
+                players = count === 2 ? ['red', 'yellow'] : count === 3 ? ['red', 'green', 'yellow'] : colors;
+            }
+
+            boardState = {}; 
+            players.forEach(p => {
+                boardState[p] = Array.from({length:4}, (_,i)=>({id:i, pos:-1, status:'base', justSpawned: false}));
+            });
+            initBoard(); createPlayerHubs(); drawTokens();
+            playerTurnIndex = 0; turnPhase = 'roll'; consecutiveSixes = 0; updateTurnUI();
+            if(isCurrentPlayerAI()) setTimeout(aiTurn, 1000);
+        }
+
+        function createPlayerHubs() {
+            document.querySelectorAll('.player-hub').forEach(e => e.remove());
+            players.forEach(p => {
+                const hub = document.createElement('div'); hub.id = `hub-${p}`; hub.className = 'player-hub';
+                const dice = document.createElement('div'); dice.className = 'dice-container'; dice.id = `dice-${p}`;
+                dice.innerHTML = createDiceSVG(1); dice.onclick = () => handleRoll(p);
+                hub.appendChild(dice); document.getElementById('game-screen').appendChild(hub);
+            });
+        }
+
+        function updateTurnUI() {
+            document.querySelectorAll('.player-hub').forEach(h => {
+                h.classList.remove('active-player');
+                const d = h.querySelector('.dice-container');
+                if(d) d.style.pointerEvents = 'none';
+            });
+            const currentColor = players[playerTurnIndex];
+            const hub = document.getElementById(`hub-${currentColor}`);
+            if(hub) {
+                hub.classList.add('active-player');
+                if (turnPhase === 'roll' && !isRolling && !isCurrentPlayerAI()) {
+                    const dice = hub.querySelector('.dice-container');
+                    if(dice) dice.style.pointerEvents = 'auto';
+                }
+            }
+        }
+
+        function handleRoll(color) {
+            if (turnPhase !== 'roll' || color !== players[playerTurnIndex] || isRolling) return;
+            if (isCurrentPlayerAI()) return;
+            performRoll();
+        }
+
+        function performRoll() {
+            isRolling = true; 
+            const currentColor = players[playerTurnIndex];
+            const diceEl = document.getElementById(`dice-${currentColor}`);
+            if(diceEl) diceEl.style.pointerEvents = 'none';
+            let count = 0; 
+            const interval = setInterval(() => {
+                diceEl.innerHTML = createDiceSVG(Math.floor(Math.random()*6)+1); 
+                playSound('roll');
+                if(++count > 10) { 
+                    clearInterval(interval); 
+                    finalizeRoll(); 
+                }
+            }, 50);
+        }
+
+        function finalizeRoll() {
+            // Logic: If online and socket connected, we might receive dice value from server.
+            // For now, calculating locally to ensure game works even if socket is just for matchmaking.
+            if (gameMode === 'online' && Math.random() > 0.9) {
+                // Simulate small chance of server sync delay logic here in real app
+            }
+            diceValue = Math.floor(Math.random() * 6) + 1;
+
+            const currentColor = players[playerTurnIndex];
+            const diceEl = document.getElementById(`dice-${currentColor}`);
+            if(diceEl) diceEl.innerHTML = createDiceSVG(diceValue);
+            
+            if (diceValue === 6) {
+                consecutiveSixes++;
+                if (consecutiveSixes === 3) {
+                    showMessage("টানা ৩ বার ৬! চাল বাতিল");
+                    consecutiveSixes = 0; setTimeout(nextTurn, 800); isRolling = false; return;
+                }
+            } else { consecutiveSixes = 0; }
+
+            const tokens = boardState[currentColor];
+            const movableTokens = tokens.filter(t => {
+                if (t.status === 'finished') return false;
+                if (t.status === 'base') return diceValue === 6;
+                return t.pos + diceValue <= 56;
+            });
+
+            if (movableTokens.length === 0) {
+                showMessage("কোনো চাল নেই!");
+                setTimeout(nextTurn, 800);
+            } else {
+                turnPhase = 'move'; highlightMovableTokens(currentColor, movableTokens);
+                if (isCurrentPlayerAI()) {
+                    // In online mode, if it's opponent turn (simulated by AI here), run AI logic
+                    setTimeout(() => aiMove(movableTokens), getAIThinkingDelay('Medium'));
+                }
+            }
+            isRolling = false;
+        }
+
+        function getAIThinkingDelay(skill) {
+            if (skill === 'New') return Math.floor(Math.random() * 800) + 1000;
+            return Math.floor(Math.random() * 500) + 500;
+        }
+
+        function highlightMovableTokens(color, tokens) {
+            tokens.forEach(t => { const el = document.getElementById(`anim-group-${color}-${t.id}`); if (el) el.classList.add('token-highlight'); });
+        }
+
+        function clearHighlights() { document.querySelectorAll('.token-highlight').forEach(el => el.classList.remove('token-highlight')); }
+
+        function getCoordinates(color, token) {
+            if (token.status === 'base') return basePositions[color][token.id];
+            if (token.status === 'track') {
+                if (token.pos < 51) return mainPath[(startIndices[color] + token.pos) % 52];
+                return homePaths[color][token.pos - 51];
+            }
+            return {x: 7.5, y: 7.5};
+        }
+
+        function drawTokens() {
+            document.querySelectorAll('.token-group').forEach(t => t.remove());
+            let positions = {};
+            players.forEach(color => boardState[color].forEach(token => {
+                const coords = getCoordinates(color, token);
+                const key = `${coords.x},${coords.y}`;
+                if(!positions[key]) positions[key] = [];
+                positions[key].push({color, token});
+            }));
+
+            players.forEach(color => boardState[color].forEach(token => {
+                const coords = getCoordinates(color, token); 
+                const key = `${coords.x},${coords.y}`;
+                const group = positions[key];
+                let cx = coords.x + 0.5, cy = coords.y + 0.5;
+                if(group.length > 1) {
+                    const idx = group.findIndex(g => g.color === color && g.token.id === token.id);
+                    const angle = (idx / group.length) * 2 * Math.PI;
+                    cx += Math.cos(angle) * 0.2;
+                    cy += Math.sin(angle) * 0.2;
+                }
+                const mainGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                mainGroup.setAttribute("id", `token-${color}-${token.id}`); mainGroup.setAttribute("class", "token-group");
+                mainGroup.style.setProperty('--fill', `var(--ludo-${color})`);
+                mainGroup.setAttribute("transform", `translate(${cx * CELL_SIZE} ${cy * CELL_SIZE}) scale(0.08)`);
+                if(color === players[playerTurnIndex]) { mainGroup.style.zIndex = "100"; }
+                const animGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                animGroup.setAttribute("id", `anim-group-${color}-${token.id}`);
+                const coinUse = document.createElementNS("http://www.w3.org/2000/svg", "use"); coinUse.setAttribute("href", "#coin");
+                mainGroup.onclick = (e) => { e.stopPropagation(); handleTokenClick(color, token.id); };
+                mainGroup.appendChild(animGroup); animGroup.appendChild(coinUse);
+                document.getElementById('ludo-board').appendChild(mainGroup);
+            }));
+        }
+
+        function handleTokenClick(color, tokenId) {
+            if (isCurrentPlayerAI()) return;
+            if (turnPhase !== 'move') return;
+            if (color !== players[playerTurnIndex]) return;
+            const animEl = document.getElementById(`anim-group-${color}-${tokenId}`);
+            if (animEl && animEl.classList.contains('token-highlight')) { moveToken(color, tokenId); }
+        }
+
+        async function moveToken(color, tokenId) {
+            clearHighlights(); turnPhase = 'moving';
+            const token = boardState[color].find(t => t.id === tokenId);
+            if (token.status === 'base') {
+                token.status = 'track'; token.pos = 0; token.justSpawned = true;
+                playSound('move'); drawTokens(); await wait(300);
+            } else {
+                for (let i = 0; i < diceValue; i++) {
+                    token.pos++; playSound('move'); drawTokens(); await wait(150);
+                }
+            }
+            await finalizeMove(color, tokenId);
+        }
+
+        async function finalizeMove(color, tokenId) {
+            const token = boardState[color].find(t => t.id === tokenId);
+            let gotExtraTurn = false;
+            if (token.status === 'track' && token.pos < 51) {
+                const globalIdx = (startIndices[color] + token.pos) % 52;
+                if (token.justSpawned) { token.justSpawned = false; }
+                else if (!safeCells.includes(globalIdx)) {
+                    const enemies = getEnemies(color);
+                    enemies.forEach(p => {
+                        boardState[p].forEach(vt => {
+                            if (vt.status === 'track' && vt.pos < 51 && (startIndices[p] + vt.pos) % 52 === globalIdx) {
+                                vt.status = 'base'; vt.pos = -1; gotExtraTurn = true;
+                                playSound('kill'); showMessage("গুটি কাটা গেছে!");
+                            }
+                        });
+                    });
+                }
+            }
+            if (token.pos === 56) {
+                token.status = 'finished'; playSound('win'); gotExtraTurn = true;
+                showMessage("হোমে পৌঁছেছে!");
+                checkWinCondition(color);
+            }
+            drawTokens();
+            if (diceValue === 6 || gotExtraTurn) {
+                turnPhase = 'roll'; updateTurnUI(); if(isCurrentPlayerAI()) setTimeout(aiTurn, 1000);
+            } else { nextTurn(); }
+        }
+
+        function checkWinCondition(color) {
+            if (boardState[color].filter(t => t.status === 'finished').length === 4) {
+                document.getElementById('win-title').innerText = `${colorNames[color]} WINNER!`;
+                document.getElementById('win-modal').style.display = 'flex'; playSound('win');
+
+                if (gameMode === 'online') {
+                    if (color === 'yellow') { OnlineWallet.win(currentBetAmount); }
+                    else { /* Already deducted on bet start */ }
+                    OnlineMatchLock.unlock(); refreshWalletUI();
+                }
+            }
+        }
+
+        function nextTurn() { 
+            playerTurnIndex = (playerTurnIndex + 1) % players.length; 
+            turnPhase = 'roll'; consecutiveSixes = 0; 
+            updateTurnUI(); 
+            if(isCurrentPlayerAI()) setTimeout(aiTurn, 1000); 
+        }
+
+        function isCurrentPlayerAI() { 
+            return gameMode === 'vsAI' && players[playerTurnIndex] !== HUMAN_COLOR;
+        }
+        
+        function aiTurn() { if (isRolling || turnPhase !== 'roll') return; performRoll(); }
+        
+        function getEnemies(aiColor) {
+            if (gameMode === 'vsAI') { return players.filter(p => p !== aiColor && p === HUMAN_COLOR); }
+            return players.filter(p => p !== aiColor);
+        }
+
+        // Simple AI Logic for Online/VS-AI
+        function aiMove(movableTokens) {
+            if(movableTokens.length === 0) return;
+            // Basic AI: Prioritize killing, then entering board, then moving
+            let selected = movableTokens[0];
+            
+            // Try to find a kill
+            for(let t of movableTokens) {
+                if(t.status === 'base' && diceValue === 6) { selected = t; break; } // Enter base
+                else if(t.status === 'track') {
+                    // Very simple logic, just move first available or highest
+                    selected = t; 
+                }
+            }
+            moveToken(players[playerTurnIndex], selected.id);
+        }
+
+        /* =========================================
+           8. EXTRAS (MATCH LOCK, DW, HELPERS)
+           ========================================= */
+        const OnlineMatchLock = {
+            key() { return 'ludo_online_lock_' + currentUserID; },
+            lock(data) { localStorage.setItem(this.key(), JSON.stringify({...data, time: Date.now()})); },
+            unlock() { localStorage.removeItem(this.key()); },
+            get() { const d = localStorage.getItem(this.key()); return d ? JSON.parse(d) : null; },
+            isLocked() { return !!this.get(); }
+        };
+
+        function showMessage(msg) {
+            const el = document.getElementById('message-overlay'); el.innerText = msg; el.style.opacity = 1;
+            setTimeout(() => el.style.opacity = 0, 1500);
+        }
+
+        function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+        function resetGame() { document.getElementById('win-modal').style.display = 'none'; startGame(gameMode, players.length); }
+
+        let dwMode = 'deposit';
+        function openDeposit() { dwMode = 'deposit'; document.getElementById('dw-title').innerText = 'Deposit'; document.getElementById('dw-amount').value = ''; document.getElementById('dw-modal').style.display = 'flex'; }
+        function openWithdraw() { dwMode = 'withdraw'; document.getElementById('dw-title').innerText = 'Withdraw'; document.getElementById('dw-amount').value = ''; document.getElementById('dw-modal').style.display = 'flex'; }
+        function closeDW() { document.getElementById('dw-modal').style.display = 'none'; }
+        
+        function submitDW() {
+            const amt = parseInt(document.getElementById('dw-amount').value);
+            if (isNaN(amt)) { showMessage("সঠিক পরিমাণ দিন"); return; }
+            if (dwMode === 'deposit') {
+                if (amt < 100 || amt > 10000) { showMessage("Deposit ৳100 - ৳10,000"); return; }
+                OnlineWallet.deposit(amt); refreshWalletUI(); showMessage("Deposit successful (demo)");
+            } else {
+                if (amt < 500 || amt > 5000) { showMessage("Withdraw ৳500 - ৳5,000"); return; }
+                // In real app, call server API here
+                showMessage("Withdraw request sent (demo)");
+            }
+            closeDW();
+        }
+    </script>
+</body>
+  </html>
