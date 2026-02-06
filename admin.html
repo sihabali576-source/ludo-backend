@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LUDO ULTIMATE ADMIN</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+            --purple: #8b5cf6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --sidebar-width: 260px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- Scrollbar --- */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* --- Login Screen --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+            display: flex; justify-content: center; align-items: center; z-index: 2000;
+            padding: 20px;
+        }
+        .login-box {
+            background: var(--bg-card); padding: 30px; border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            width: 100%; max-width: 380px; text-align: center; border: 1px solid var(--border);
+        }
+        .login-input {
+            width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 8px;
+            border: 1px solid var(--border); background: var(--bg-dark); color: white; outline: none; font-size: 16px;
+        }
+        .login-input:focus { border-color: var(--primary); }
+        .login-btn {
+            width: 100%; padding: 14px; background: var(--primary); color: white; border: none;
+            border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 16px; letter-spacing: 0.5px;
+        }
+        .login-btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+        /* --- Layout --- */
+        #admin-panel { display: none; width: 100%; height: 100%; display: flex; position: relative; }
+        
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; padding: 15px;
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000; overflow-y: auto;
+        }
+        .brand { 
+            font-size: 22px; font-weight: 800; color: var(--text-main); margin-bottom: 25px; 
+            display: flex; align-items: center; gap: 12px; padding: 0 10px;
+        }
+        .brand i { color: var(--primary); }
+        
+        .nav-group { font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin: 15px 10px 5px 10px; letter-spacing: 1px; font-weight: 700; }
+        
+        .nav-item {
+            padding: 10px 15px; margin-bottom: 4px; border-radius: 8px; cursor: pointer;
+            color: var(--text-muted); display: flex; align-items: center; gap: 12px; transition: 0.2s; font-size: 14px; font-weight: 500;
+        }
+        .nav-item:hover, .nav-item.active { background: rgba(59, 130, 246, 0.1); color: var(--primary); }
+        .nav-item.active { border-left: 3px solid var(--primary); }
+        .nav-item i { width: 20px; text-align: center; font-size: 16px; }
+
+        /* --- Content --- */
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; width: 100%; background: #0b1120; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 10px; sticky: top; }
+        .header h1 { font-size: 22px; font-weight: 700; color: var(--text-main); }
+        .logout-btn { padding: 8px 16px; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+
+        /* --- Stats --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: var(--bg-card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+        .stat-title { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; font-weight: 700; }
+        .stat-value { font-size: 24px; font-weight: 800; color: var(--text-main); }
+        .stat-icon { position: absolute; right: 15px; bottom: 15px; font-size: 24px; opacity: 0.1; transform: scale(1.5); }
+
+        /* --- Tables & Cards --- */
+        .card { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .card h3 { margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; font-size: 16px; display: flex; align-items: center; justify-content: space-between; }
+        
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; font-size: 14px; }
+        th { text-align: left; padding: 12px 15px; background: rgba(255,255,255,0.02); color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+        td { padding: 12px 15px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+        tr:hover td { background: rgba(255,255,255,0.02); color: var(--text-main); }
+        tr:last-child td { border-bottom: none; }
+        
+        /* --- Badges & Buttons --- */
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; white-space: nowrap; display: inline-block; }
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .badge-info { background: rgba(6, 182, 212, 0.15); color: var(--info); }
+        .badge-purple { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
+
+        .btn-sm { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 5px; transition: 0.2s; color: white;}
+        .btn-approve { background: var(--success); }
+        .btn-reject { background: var(--danger); }
+        .btn-view { background: var(--primary); }
+        .btn-action { background: var(--border); color: var(--text-main); }
+
+        /* --- Forms & Inputs --- */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 13px; font-weight: 600; }
+        .form-control {
+            width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border);
+            color: white; border-radius: 8px; outline: none; font-size: 14px; transition: 0.2s;
+        }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+        
+        /* --- Mobile Toggle --- */
+        .hamburger-btn { display: none; background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
+        #sidebar-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 900; display: none; backdrop-filter: blur(2px);
+        }
+        #sidebar-overlay.active { display: block; }
+
+        /* --- Console/Logs --- */
+        .log-terminal { background: #000; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; height: 300px; overflow-y: auto; font-size: 12px; border: 1px solid #333; }
+        .log-line { margin-bottom: 5px; border-bottom: 1px solid #111; padding-bottom: 2px; }
+        .log-time { color: var(--text-muted); margin-right: 10px; }
+        .log-info { color: var(--info); }
+        .log-warn { color: var(--warning); }
+        .log-error { color: var(--danger); }
+        .log-success { color: var(--success); }
+
+        /* --- Sections Animation --- */
+        .section-view { display: none; animation: fadeIn 0.3s ease-out; }
+        .section-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .hamburger-btn { display: block; }
+            .sidebar { position: fixed; height: 100%; transform: translateX(-100%); box-shadow: 10px 0 20px rgba(0,0,0,0.5); }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { padding: 15px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <div style="font-size: 48px; color: var(--primary); margin-bottom: 15px;">
+                <i class="fas fa-chess-board"></i>
+            </div>
+            <h2 style="margin-bottom: 5px; color: white;">ADMIN PANEL</h2>
+            <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 13px;">Connected to App.js Environment</p>
+            <form onsubmit="handleLogin(event)">
+                <input type="password" id="admin-pass" class="login-input" placeholder="Enter Access PIN" required>
+                <button type="submit" class="login-btn">ACCESS DASHBOARD</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div id="admin-panel">
+        
+        <div class="sidebar" id="sidebar">
+            <div class="brand">
+                <i class="fas fa-dice-d6"></i> LUDO CORE
+            </div>
+
+            <div class="nav-item active" onclick="switchView('dashboard')">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </div>
+            
+            <div class="nav-group">GAMEPLAY & SERVER</div>
+            <div class="nav-item" onclick="switchView('live')">
+                <i class="fas fa-satellite-dish"></i> Live Monitor
+            </div>
+            <div class="nav-item" onclick="switchView('bots')">
+                <i class="fas fa-robot"></i> Bot Engine
+            </div>
+            <div class="nav-item" onclick="switchView('tournaments')">
+                <i class="fas fa-trophy"></i> Tournaments
+            </div>
+
+            <div class="nav-group">FINANCE & LEDGER</div>
+            <div class="nav-item" onclick="switchView('finance')">
+                <i class="fas fa-wallet"></i> Finance Center
+            </div>
+            <div class="nav-item" onclick="switchView('ledger')">
+                <i class="fas fa-book"></i> Accounting
+            </div>
+
+            <div class="nav-group">MANAGEMENT</div>
+            <div class="nav-item" onclick="switchView('users')">
+                <i class="fas fa-users"></i> User Manager
+            </div>
+            <div class="nav-item" onclick="switchView('store')">
+                <i class="fas fa-shopping-bag"></i> Store & Ads
+            </div>
+            <div class="nav-item" onclick="switchView('support')">
+                <i class="fas fa-headset"></i> Support Desk
+            </div>
+
+            <div class="nav-group">SYSTEM</div>
+            <div class="nav-item" onclick="switchView('security')">
+                <i class="fas fa-shield-alt"></i> Security & Logs
+            </div>
+            <div class="nav-item" onclick="switchView('settings')">
+                <i class="fas fa-sliders-h"></i> Settings
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button class="hamburger-btn" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="page-title">Dashboard</h1>
+                </div>
+                <button class="logout-btn" onclick="logout()"><i class="fas fa-power-off"></i> Logout</button>
+            </div>
+
+            <div id="view-dashboard" class="section-view active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-title">Registered Users</div>
+                        <div class="stat-value" id="dash-total-users">0</div>
+                        <i class="fas fa-users stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">System Balance</div>
+                        <div class="stat-value" id="dash-sys-balance">0</div>
+                        <i class="fas fa-gamepad stat-icon" style="color: var(--success);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Today's Revenue</div>
+                        <div class="stat-value" id="dash-revenue">0</div>
+                        <i class="fas fa-coins stat-icon" style="color: var(--warning);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Pending Tickets</div>
+                        <div class="stat-value" style="color: var(--danger)" id="dash-pending-tx">0</div>
+                        <i class="fas fa-ticket-alt stat-icon" style="color: var(--danger);"></i>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Revenue Analytics (7 Days) <button class="btn-sm btn-action">Export</button></h3>
+                    <div style="height: 250px; width: 100%;">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="card">
+                        <h3><i class="fas fa-exclamation-circle" style="color: var(--warning)"></i> Recent Alerts</h3>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>User</th><th>Risk</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    <tr><td>System</td><td><span class="badge badge-success">Stable</span></td><td><button class="btn-sm btn-view">Check</button></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-server" style="color: var(--info)"></i> System Health</h3>
+                        <div style="margin-top: 10px;">
+                            <div style="margin-bottom:10px;"><small>CPU Usage</small> <div style="background:#334155; height:6px; border-radius:3px; margin-top:5px;"><div style="width:45%; background:var(--success); height:100%; border-radius:3px;"></div></div></div>
+                            <div style="margin-bottom:10px;"><small>RAM Usage</small> <div style="background:#334155; height:6px; border-radius:3px; margin-top:5px;"><div style="width:70%; background:var(--warning); height:100%; border-radius:3px;"></div></div></div>
+                            <div style="margin-bottom:10px;"><small>Socket Latency</small> <div style="background:#334155; height:6px; border-radius:3px; margin-top:5px;"><div style="width:20%; background:var(--info); height:100%; border-radius:3px;"></div></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-live" class="section-view">
+                <div class="card">
+                    <h3>Live Match Spectator <span class="badge badge-success">Live: 0 Rooms</span></h3>
+                    <div class="table-responsive">
+                        <table id="live-rooms-table">
+                            <thead>
+                                <tr><th>Room ID</th><th>Mode</th><th>Players</th><th>Turn Time</th><th>Pot Size</th><th>Action</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="6" style="text-align:center; padding: 20px;">No active live rooms data (Connect to Socket for realtime)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Real-time Dice RNG Log (Server Authoritative)</h3>
+                    <div class="log-terminal" id="dice-log">
+                        <div class="log-line"><span class="log-time">14:20:01</span> System: RNG Service Initialized...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-bots" class="section-view">
+                <div class="card">
+                    <h3>AI Configuration</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Bot Win Ratio (%)</label>
+                            <input type="range" class="form-control" style="padding:0;" min="0" max="100" value="40">
+                            <small style="color: var(--text-muted)">Current: 40% (Balanced)</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Auto-Fill Empty Slots</label>
+                            <select class="form-control">
+                                <option>Enabled (After 10s)</option>
+                                <option>Enabled (Immediate)</option>
+                                <option>Disabled</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Active Bots (Stored in App Memory)</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Bot Name</th><th>Difficulty</th><th>Current Room</th><th>Status</th></tr></thead>
+                            <tbody>
+                                <tr><td>Rayhan</td><td><span class="badge badge-danger">Hard</span></td><td>#RM_Live</td><td>Idle</td></tr>
+                                <tr><td>Arman</td><td><span class="badge badge-success">Easy</span></td><td>-</td><td>Idle</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-tournaments" class="section-view">
+                <div style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
+                    <button class="btn-sm btn-view" style="padding: 10px 20px;">+ Create Tournament</button>
+                </div>
+                <div class="card">
+                    <h3>Scheduled Tournaments</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Title</th><th>Entry Fee</th><th>Prize Pool</th><th>Start Time</th><th>Players</th><th>Status</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td>Mega Ludo Cup</td>
+                                    <td>50 Coins</td>
+                                    <td>5000 Coins</td>
+                                    <td>Today, 08:00 PM</td>
+                                    <td>0/500</td>
+                                    <td><span class="badge badge-info">Registration Open</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-finance" class="section-view">
+                <div class="stats-grid">
+                    <div class="stat-card" style="border-left: 4px solid var(--warning)">
+                        <div class="stat-title">Pending Withdrawals</div>
+                        <div class="stat-value" id="fin-pending-with">0</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid var(--success)">
+                        <div class="stat-title">Wallet Balance (Global)</div>
+                        <div class="stat-value" id="fin-global-balance">0</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Deposit Requests (Incoming)</h3>
+                    <div class="table-responsive">
+                        <table id="deposit-table">
+                            <thead><tr><th>User</th><th>Method</th><th>Amount</th><th>TrxID</th><th>Action</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Withdrawal Requests (Outgoing)</h3>
+                    <div class="table-responsive">
+                        <table id="withdraw-table">
+                            <thead><tr><th>User</th><th>Method</th><th>Amount</th><th>To Number</th><th>Action</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-ledger" class="section-view">
+                <div class="card">
+                    <h3>Double Entry Ledger (System)</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Tx ID</th><th>Account Debit</th><th>Account Credit</th><th>Amount</th><th>Reference</th><th>Time</th></tr></thead>
+                            <tbody id="ledger-tbody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-users" class="section-view">
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                        <input type="text" placeholder="Search User ID / Mobile..." class="form-control" style="width: 200px;">
+                    </div>
+                    <div class="table-responsive">
+                        <table id="users-table">
+                            <thead><tr><th>User</th><th>Mobile</th><th>Email</th><th>KYC</th><th>Action</th></tr></thead>
+                            <tbody id="users-tbody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-store" class="section-view">
+                <div class="form-grid">
+                    <div class="card">
+                        <h3>Item Manager</h3>
+                        <div class="form-group">
+                            <label class="form-label">Add New Item</label>
+                            <input type="text" class="form-control" placeholder="Item Name (e.g., Gold Dice)">
+                        </div>
+                        <button class="btn-sm btn-approve" style="width:100%">Add Item</button>
+                    </div>
+                    <div class="card">
+                        <h3>Send Notifications</h3>
+                        <textarea class="form-control" rows="3" placeholder="Message for all users..."></textarea>
+                        <button class="btn-sm btn-view" style="width:100%; margin-top:10px;">Send Push</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-support" class="section-view">
+                <div class="card">
+                    <h3>Support Tickets</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Ticket ID</th><th>User</th><th>Subject</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody>
+                                <tr><td>#TK_001</td><td>User</td><td>Payment not added</td><td><span class="badge badge-warning">Open</span></td><td><button class="btn-sm btn-view">Reply</button></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-security" class="section-view">
+                <div class="card">
+                    <h3>Security Audit Logs</h3>
+                    <div class="log-terminal" style="height: 400px;">
+                        <div class="log-line"><span class="log-time">14:00</span> Admin login from IP 192.168.1.1</div>
+                        <div class="log-line"><span class="log-time">14:05</span> <span class="log-warn">System check: All modules operational</span></div>
+                        <div class="log-line"><span class="log-time">14:10</span> Payment Gateway Callback Verified</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-settings" class="section-view">
+                <div class="card">
+                    <h3>Payment Configuration (Synced with App.js)</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Bkash Number</label>
+                            <input type="text" id="set-bkash" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nagad Number</label>
+                            <input type="text" id="set-nagad" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Rocket Number</label>
+                            <input type="text" id="set-rocket" class="form-control">
+                        </div>
+                    </div>
+                    <button class="login-btn" onclick="saveSettings()">Save Configuration</button>
+                </div>
+                <div class="card">
+                    <h3>Platform Control</h3>
+                    <div class="form-group" style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding-bottom:10px;">
+                        <span>Maintenance Mode</span>
+                        <input type="checkbox">
+                    </div>
+                    <div class="form-group" style="display:flex; justify-content:space-between;">
+                        <span>Allow New Registrations</span>
+                        <input type="checkbox" checked>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONNECTED SYSTEM CORE
+        // Reads/Writes directly to App.js keys
+        // ==========================================
+
+        // Keys used by app.js
+        const STORAGE_KEY_USERS = 'ludo_users';
+        const STORAGE_KEY_STATE = 'ludoAppState';
+        
+        // Admin local state
+        let appData = {
+            users: [],
+            transactions: [],
+            config: { bkash: '', nagad: '', rocket: '' }
+        };
+
+        // --- Init ---
+        window.onload = function() {
+            // Check auth for both Admin Panel and App.js consistency
+            if(sessionStorage.getItem('adminAuth') === 'true' || sessionStorage.getItem('adminLoggedIn') === 'true') {
+                showPanel();
+            }
+            loadData();
+        };
+
+        function loadData() {
+            // 1. Load Users from ludo_users (App.js Key)
+            const storedUsers = localStorage.getItem(STORAGE_KEY_USERS);
+            if (storedUsers) {
+                appData.users = JSON.parse(storedUsers);
+            }
+
+            // 2. Load State from ludoAppState (App.js Key)
+            const storedState = localStorage.getItem(STORAGE_KEY_STATE);
+            if (storedState) {
+                const state = JSON.parse(storedState);
+                // Sync transactions
+                appData.transactions = state.transactions || [];
+                // Sync payment config (adminNumbers in App.js = config in Admin)
+                appData.config = state.adminNumbers || { bkash: '', nagad: '', rocket: '' };
+            }
+
+            renderAll();
+        }
+
+        // --- Auth ---
+        function handleLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('admin-pass').value;
+            // App.js password is '1234'
+            if(pass === '1234') { 
+                // Set both session keys for compatibility
+                sessionStorage.setItem('adminAuth', 'true');
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                showPanel();
+            } else {
+                alert('Access Denied');
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('adminAuth');
+            sessionStorage.removeItem('adminLoggedIn');
+            location.reload();
+        }
+
+        function showPanel() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'flex';
+            renderChart();
+        }
+
+        // --- UI Navigation ---
+        function switchView(view) {
+            document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + view).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            const titles = {
+                dashboard: 'Dashboard', live: 'Live Monitor', bots: 'Bot Engine', 
+                tournaments: 'Tournaments', finance: 'Finance Center', ledger: 'Accounting',
+                users: 'User Management', store: 'Store & Ads', support: 'Support Desk',
+                security: 'Security Logs', settings: 'Settings'
+            };
+            document.getElementById('page-title').innerText = titles[view];
+            if(window.innerWidth <= 768) toggleSidebar();
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('sidebar-overlay').classList.toggle('active');
+        }
+
+        // --- Rendering Logic ---
+        function renderAll() {
+            renderFinance();
+            renderUsers();
+            renderLedger();
+            renderSettings();
+            updateStats();
+        }
+
+        function renderFinance() {
+            // Deposits
+            const depTable = document.getElementById('deposit-table');
+            depTable.querySelector('tbody').innerHTML = '';
+            
+            // Withdraws
+            const withTable = document.getElementById('withdraw-table');
+            withTable.querySelector('tbody').innerHTML = '';
+
+            let pendingWith = 0;
+            let pendingDep = 0;
+
+            appData.transactions.forEach(t => {
+                // Skip non-pending for action lists, or show all? Let's show pending for action
+                if(t.status !== 'pending') return;
+
+                // Extract user info if available, else use generic
+                let userDisplay = "Unknown";
+                let infoDisplay = t.info || "";
+
+                if(t.type === 'deposit') {
+                    pendingDep++;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${userDisplay}</td>
+                        <td><span class="badge badge-info">${t.method ? t.method.toUpperCase() : 'N/A'}</span></td>
+                        <td style="color:#fff; font-weight:bold;">${t.amount}</td>
+                        <td style="font-size:11px;">${infoDisplay}</td>
+                        <td>
+                            <button class="btn-sm btn-approve" onclick="processTx(${t.id}, 'success')"><i class="fas fa-check"></i></button>
+                            <button class="btn-sm btn-reject" onclick="processTx(${t.id}, 'rejected')"><i class="fas fa-times"></i></button>
+                        </td>
+                    `;
+                    depTable.querySelector('tbody').appendChild(tr);
+                } 
+                else if (t.type === 'withdraw') {
+                    pendingWith++;
+                    // Extract number from info "To: 017... (Bkash)"
+                    const numberMatch = infoDisplay.match(/To: ([\d]+)/);
+                    const toNumber = numberMatch ? numberMatch[1] : "N/A";
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${userDisplay}</td>
+                        <td><span class="badge badge-warning">${t.method ? t.method.toUpperCase() : 'N/A'}</span></td>
+                        <td style="color:#fff; font-weight:bold;">${t.amount}</td>
+                        <td>${toNumber}</td>
+                        <td>
+                            <button class="btn-sm btn-approve" onclick="processTx(${t.id}, 'success')"><i class="fas fa-check"></i></button>
+                            <button class="btn-sm btn-reject" onclick="processTx(${t.id}, 'rejected')"><i class="fas fa-times"></i></button>
+                        </td>
+                    `;
+                    withTable.querySelector('tbody').appendChild(tr);
+                }
+            });
+
+            document.getElementById('fin-pending-with').innerText = pendingWith;
+        }
+
+        function renderLedger() {
+            const tbody = document.getElementById('ledger-tbody');
+            tbody.innerHTML = '';
+            // Show last 10 transactions
+            appData.transactions.slice(0, 10).forEach(t => {
+                const tr = document.createElement('tr');
+                let debit = '-', credit = '-';
+                if(t.type === 'deposit') { credit = 'System'; debit = 'User'; }
+                else if(t.type === 'withdraw') { credit = 'User'; debit = 'System'; }
+                else if(t.type === 'game_win') { credit = 'System'; debit = 'User'; }
+                else if(t.type === 'game_loss') { credit = 'User'; debit = 'System'; }
+
+                tr.innerHTML = `
+                    <td>#TX_${t.id.toString().slice(-4)}</td>
+                    <td>${debit}</td>
+                    <td>${credit}</td>
+                    <td>${t.amount}</td>
+                    <td>${t.type}</td>
+                    <td>${new Date(t.id).toLocaleTimeString()}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = '';
+            appData.users.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><b>${u.name || 'User'}</b></td>
+                    <td>${u.mobile || 'N/A'}</td>
+                    <td>${u.email || 'N/A'}</td>
+                    <td><span class="badge badge-success">Active</span></td>
+                    <td>
+                        <button class="btn-sm btn-action">Edit</button>
+                        <button class="btn-sm btn-reject">Ban</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderSettings() {
+            document.getElementById('set-bkash').value = appData.config.bkash || '';
+            document.getElementById('set-nagad').value = appData.config.nagad || '';
+            document.getElementById('set-rocket').value = appData.config.rocket || '';
+        }
+
+        function updateStats() {
+            document.getElementById('dash-total-users').innerText = appData.users.length;
+            
+            // Get balance from app state directly if possible, else 0
+            const state = JSON.parse(localStorage.getItem(STORAGE_KEY_STATE));
+            const currentBalance = state ? state.balance : 0;
+            
+            document.getElementById('dash-sys-balance').innerText = currentBalance;
+            document.getElementById('fin-global-balance').innerText = currentBalance;
+
+            const pendingTx = appData.transactions.filter(t => t.status === 'pending').length;
+            document.getElementById('dash-pending-tx').innerText = pendingTx;
+
+            // Calc fake revenue based on completed deposits
+            const revenue = appData.transactions
+                .filter(t => t.type === 'deposit' && t.status === 'success')
+                .reduce((sum, t) => sum + t.amount, 0);
+            document.getElementById('dash-revenue').innerText = revenue;
+        }
+
+        // --- CRITICAL SYNC FUNCTION ---
+        function processTx(id, status) {
+            const tx = appData.transactions.find(t => t.id === id);
+            if(!tx) return;
+
+            // 1. Update Local Admin State
+            tx.status = status;
+
+            // 2. Sync with App.js State (ludoAppState)
+            let appState = JSON.parse(localStorage.getItem(STORAGE_KEY_STATE));
+            if(!appState) return; // Should not happen
+
+            const txIndex = appState.transactions.findIndex(t => t.id === id);
+            if(txIndex > -1) {
+                appState.transactions[txIndex].status = status;
+
+                // Logic to update Balance (Matching app.js logic)
+                if(status === 'success') {
+                    if(tx.type === 'deposit') {
+                        appState.balance += tx.amount; 
+                    }
+                    // If withdraw success, balance already deducted in requestWithdraw (app.js)
+                } 
+                else if (status === 'rejected') {
+                    if(tx.type === 'withdraw') {
+                        appState.balance += tx.amount; // Refund
+                    }
+                }
+
+                // Save back to localStorage
+                localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(appState));
+            }
+
+            // Refresh UI
+            renderAll();
+            alert(`Transaction ${status} successfully!`);
+        }
+
+        function saveSettings() {
+            const bkash = document.getElementById('set-bkash').value;
+            const nagad = document.getElementById('set-nagad').value;
+            const rocket = document.getElementById('set-rocket').value;
+
+            // Update Local Admin Config
+            appData.config.bkash = bkash;
+            appData.config.nagad = nagad;
+            appData.config.rocket = rocket;
+
+            // Sync with App.js State
+            let appState = JSON.parse(localStorage.getItem(STORAGE_KEY_STATE)) || {};
+            appState.adminNumbers = {
+                bkash: bkash,
+                nagad: nagad,
+                rocket: rocket
+            };
+            
+            localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(appState));
+            alert('Configuration Saved & Synced');
+        }
+
+        // --- Chart ---
+        function renderChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Revenue',
+                        data: [120, 190, 300, 500, 200, 300, 450],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        // --- Log Simulator ---
+        setInterval(() => {
+            const logDiv = document.getElementById('dice-log');
+            const msgs = [
+                "Server heartbeat received.",
+                "Database sync completed.",
+                "Validating user session...",
+                "Checking payment gateway status...",
+                "Optimizing game assets..."
+            ];
+            const randomMsg = msgs[Math.floor(Math.random() * msgs.length)];
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString()}</span> ${randomMsg}`;
+            logDiv.prepend(line);
+            if(logDiv.children.length > 20) logDiv.lastChild.remove();
+        }, 5000);
+
+    </script>
+</body>
+</html>
