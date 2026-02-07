@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LUDO ULTIMATE ADMIN & GAME</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        /* ==========================================
+           ADMIN CSS
+           ========================================== */
+        :root {
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #06b6d4;
+            --purple: #8b5cf6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --sidebar-width: 260px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- Scrollbar --- */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* --- Login Screen --- */
+        #login-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+            display: flex; justify-content: center; align-items: center; z-index: 2000;
+            padding: 20px;
+        }
+        .login-box {
+            background: var(--bg-card); padding: 30px; border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            width: 100%; max-width: 380px; text-align: center; border: 1px solid var(--border);
+        }
+        .login-input {
+            width: 100%; padding: 14px; margin-bottom: 15px; border-radius: 8px;
+            border: 1px solid var(--border); background: var(--bg-dark); color: white; outline: none; font-size: 16px;
+        }
+        .login-input:focus { border-color: var(--primary); }
+        .login-btn {
+            width: 100%; padding: 14px; background: var(--primary); color: white; border: none;
+            border-radius: 8px; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 16px; letter-spacing: 0.5px;
+        }
+        .login-btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
+
+        /* --- Layout --- */
+        #admin-panel { display: none; width: 100%; height: 100%; display: flex; position: relative; }
+        
+        /* --- Sidebar --- */
+        .sidebar {
+            width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; padding: 15px;
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000; overflow-y: auto;
+        }
+        .brand { 
+            font-size: 22px; font-weight: 800; color: var(--text-main); margin-bottom: 25px; 
+            display: flex; align-items: center; gap: 12px; padding: 0 10px;
+        }
+        .brand i { color: var(--primary); }
+        
+        .nav-group { font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin: 15px 10px 5px 10px; letter-spacing: 1px; font-weight: 700; }
+        
+        .nav-item {
+            padding: 10px 15px; margin-bottom: 4px; border-radius: 8px; cursor: pointer;
+            color: var(--text-muted); display: flex; align-items: center; gap: 12px; transition: 0.2s; font-size: 14px; font-weight: 500;
+        }
+        .nav-item:hover, .nav-item.active { background: rgba(59, 130, 246, 0.1); color: var(--primary); }
+        .nav-item.active { border-left: 3px solid var(--primary); }
+        .nav-item i { width: 20px; text-align: center; font-size: 16px; }
+
+        /* --- Content --- */
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; width: 100%; background: #0b1120; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 10px; sticky: top; }
+        .header h1 { font-size: 22px; font-weight: 700; color: var(--text-main); }
+        .logout-btn { padding: 8px 16px; background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+
+        /* --- Stats --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: var(--bg-card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+        .stat-title { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; font-weight: 700; }
+        .stat-value { font-size: 24px; font-weight: 800; color: var(--text-main); }
+        .stat-icon { position: absolute; right: 15px; bottom: 15px; font-size: 24px; opacity: 0.1; transform: scale(1.5); }
+
+        /* --- Tables & Cards --- */
+        .card { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); padding: 20px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .card h3 { margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px; font-size: 16px; display: flex; align-items: center; justify-content: space-between; }
+        
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; font-size: 14px; }
+        th { text-align: left; padding: 12px 15px; background: rgba(255,255,255,0.02); color: var(--text-muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
+        td { padding: 12px 15px; border-bottom: 1px solid var(--border); color: var(--text-muted); }
+        tr:hover td { background: rgba(255,255,255,0.02); color: var(--text-main); }
+        tr:last-child td { border-bottom: none; }
+        
+        /* --- Badges & Buttons --- */
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; white-space: nowrap; display: inline-block; }
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .badge-info { background: rgba(6, 182, 212, 0.15); color: var(--info); }
+        .badge-purple { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
+
+        .btn-sm { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; margin-right: 5px; transition: 0.2s; color: white;}
+        .btn-approve { background: var(--success); }
+        .btn-reject { background: var(--danger); }
+        .btn-view { background: var(--primary); }
+        .btn-action { background: var(--border); color: var(--text-main); }
+
+        /* --- Forms & Inputs --- */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 13px; font-weight: 600; }
+        .form-control {
+            width: 100%; padding: 12px; background: #0f172a; border: 1px solid var(--border);
+            color: white; border-radius: 8px; outline: none; font-size: 14px; transition: 0.2s;
+        }
+        .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+        
+        /* --- Mobile Toggle --- */
+        .hamburger-btn { display: none; background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
+        #sidebar-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 900; display: none; backdrop-filter: blur(2px);
+        }
+        #sidebar-overlay.active { display: block; }
+
+        /* --- Console/Logs --- */
+        .log-terminal { background: #000; padding: 15px; border-radius: 8px; font-family: 'Courier New', monospace; height: 300px; overflow-y: auto; font-size: 12px; border: 1px solid #333; }
+        .log-line { margin-bottom: 5px; border-bottom: 1px solid #111; padding-bottom: 2px; }
+        .log-time { color: var(--text-muted); margin-right: 10px; }
+        .log-info { color: var(--info); }
+        .log-warn { color: var(--warning); }
+        .log-error { color: var(--danger); }
+        .log-success { color: var(--success); }
+
+        /* --- Sections Animation --- */
+        .section-view { display: none; animation: fadeIn 0.3s ease-out; }
+        .section-view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .hamburger-btn { display: block; }
+            .sidebar { position: fixed; height: 100%; transform: translateX(-100%); box-shadow: 10px 0 20px rgba(0,0,0,0.5); }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { padding: 15px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ==========================================
+           ADDED CSS FOR DICE CONTROL & MANUAL COINS
+           ========================================== */
+        .dice-control-grid {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .dice-btn {
+            width: 50px;
+            height: 50px;
+            background: var(--bg-card);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+        .dice-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+        .dice-btn.active-force {
+            background: var(--warning);
+            border-color: var(--warning);
+            color: #000;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* ==========================================
+           APP.JS CSS (Hidden/Minimal to support Logic)
+           ========================================== */
+        /* Since we are using Admin Panel as UI, we hide App UI but keep DOM elements for JS */
+        #app-container-wrapper {
+            display: none; 
+            position: absolute; 
+            top: -9999px; 
+            left: -9999px;
+        }
+        
+        /* Ensure ludo-board SVG renders correctly if we ever show it */
+        #ludo-board { width: 100%; height: 100%; }
+        
+        /* Toast Message */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 2px;
+            padding: 16px;
+            position: fixed;
+            z-index: 3000;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            font-size: 17px;
+        }
+        #toast.show {
+            visibility: visible;
+            -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+            animation: fadein 0.5s, fadeout 0.5s 2.5s;
+        }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <div style="font-size: 48px; color: var(--primary); margin-bottom: 15px;">
+                <i class="fas fa-chess-board"></i>
+            </div>
+            <h2 style="margin-bottom: 5px; color: white;">ADMIN PANEL</h2>
+            <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 13px;">Connected to App.js Environment</p>
+            <form onsubmit="handleAdminLogin(event)">
+                <input type="password" id="admin-pass" class="login-input" placeholder="Enter Access PIN" required>
+                <button type="submit" class="login-btn">ACCESS DASHBOARD</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <div id="admin-panel">
+        
+        <div class="sidebar" id="sidebar">
+            <div class="brand">
+                <i class="fas fa-dice-d6"></i> LUDO CORE
+            </div>
+
+            <div class="nav-item active" onclick="switchView('dashboard')">
+                <i class="fas fa-chart-pie"></i> Dashboard
+            </div>
+            
+            <div class="nav-group">GAMEPLAY & SERVER</div>
+            <div class="nav-item" onclick="switchView('live')">
+                <i class="fas fa-satellite-dish"></i> Live Monitor
+            </div>
+            <div class="nav-item" onclick="switchView('bots')">
+                <i class="fas fa-robot"></i> Bot Engine
+            </div>
+            <div class="nav-item" onclick="switchView('tournaments')">
+                <i class="fas fa-trophy"></i> Tournaments
+            </div>
+
+            <div class="nav-group">FINANCE & LEDGER</div>
+            <div class="nav-item" onclick="switchView('finance')">
+                <i class="fas fa-wallet"></i> Finance Center
+            </div>
+            <div class="nav-item" onclick="switchView('ledger')">
+                <i class="fas fa-book"></i> Accounting
+            </div>
+
+            <div class="nav-group">MANAGEMENT</div>
+            <div class="nav-item" onclick="switchView('users')">
+                <i class="fas fa-users"></i> User Manager
+            </div>
+            <div class="nav-item" onclick="switchView('store')">
+                <i class="fas fa-shopping-bag"></i> Store & Ads
+            </div>
+            <div class="nav-item" onclick="switchView('support')">
+                <i class="fas fa-headset"></i> Support Desk
+            </div>
+
+            <div class="nav-group">SYSTEM</div>
+            <div class="nav-item" onclick="switchView('security')">
+                <i class="fas fa-shield-alt"></i> Security & Logs
+            </div>
+            <div class="nav-item" onclick="switchView('settings')">
+                <i class="fas fa-sliders-h"></i> Settings
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button class="hamburger-btn" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="page-title">Dashboard</h1>
+                </div>
+                <button class="logout-btn" onclick="logout()"><i class="fas fa-power-off"></i> Logout</button>
+            </div>
+
+            <div id="view-dashboard" class="section-view active">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-title">Registered Users</div>
+                        <div class="stat-value" id="dash-total-users">0</div>
+                        <i class="fas fa-users stat-icon" style="color: var(--primary);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">System Balance</div>
+                        <div class="stat-value" id="dash-sys-balance">0</div>
+                        <i class="fas fa-gamepad stat-icon" style="color: var(--success);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Today's Revenue</div>
+                        <div class="stat-value" id="dash-revenue">0</div>
+                        <i class="fas fa-coins stat-icon" style="color: var(--warning);"></i>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-title">Pending Tickets</div>
+                        <div class="stat-value" style="color: var(--danger)" id="dash-pending-tx">0</div>
+                        <i class="fas fa-ticket-alt stat-icon" style="color: var(--danger);"></i>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Revenue Analytics (7 Days) <button class="btn-sm btn-action">Export</button></h3>
+                    <div style="height: 250px; width: 100%;">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="card">
+                        <h3><i class="fas fa-exclamation-circle" style="color: var(--warning)"></i> Recent Alerts</h3>
+                        <div class="table-responsive">
+                            <table>
+                                <thead><tr><th>User</th><th>Risk</th><th>Action</th></tr></thead>
+                                <tbody>
+                                    <tr><td>System</td><td><span class="badge badge-success">Stable</span></td><td><button class="btn-sm btn-view">Check</button></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-server" style="color: var(--info)"></i> System Health</h3>
+                        <div style="margin-top: 10px;">
+                            <div style="margin-bottom:10px;"><small>CPU Usage</small> <div style="background:#334155; height:6px; border-radius:3px; margin-top:5px;"><div style="width:45%; background:var(--success); height:100%; border-radius:3px;"></div></div></div>
+                            <div style="margin-bottom:10px;"><small>RAM Usage</small> <div style="background:#334155; height:6px; border-radius:3px; margin-top:5px;"><div style="width:70%; background:var(--warning); height:100%; border-radius:3px;"></div></div></div>
+                            <div style="margin-bottom:10px;"><small>Socket Latency</small> <div style="background:#334155; height:6px; border-radius:3px; margin-top:5px;"><div style="width:20%; background:var(--info); height:100%; border-radius:3px;"></div></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-live" class="section-view">
+                <div class="card">
+                    <h3>Live Match Spectator <span class="badge badge-success">Live: 0 Rooms</span></h3>
+                    <div class="table-responsive">
+                        <table id="live-rooms-table">
+                            <thead>
+                                <tr><th>Room ID</th><th>Mode</th><th>Players</th><th>Turn Time</th><th>Pot Size</th><th>Action</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="6" style="text-align:center; padding: 20px;">No active live rooms data (Connect to Socket for realtime)</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ADDED: DICE CONTROL -->
+                <div class="card" style="border-color: var(--warning);">
+                    <h3><i class="fas fa-dice" style="color: var(--warning)"></i> Admin Dice Control</h3>
+                    <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 10px;">Click a number to force dice result for the next roll (Offline & Online).</p>
+                    <div class="dice-control-grid">
+                        <div class="dice-btn" onclick="setAdminDice(1, this)">1</div>
+                        <div class="dice-btn" onclick="setAdminDice(2, this)">2</div>
+                        <div class="dice-btn" onclick="setAdminDice(3, this)">3</div>
+                        <div class="dice-btn" onclick="setAdminDice(4, this)">4</div>
+                        <div class="dice-btn" onclick="setAdminDice(5, this)">5</div>
+                        <div class="dice-btn" onclick="setAdminDice(6, this)">6</div>
+                    </div>
+                    <div id="dice-status-text" style="margin-top:10px; font-size:12px; color:var(--success); height: 15px;"></div>
+                </div>
+
+                <div class="card">
+                    <h3>Real-time Dice RNG Log (Server Authoritative)</h3>
+                    <div class="log-terminal" id="dice-log">
+                        <div class="log-line"><span class="log-time">14:20:01</span> System: RNG Service Initialized...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-bots" class="section-view">
+                <div class="card">
+                    <h3>AI Configuration</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Bot Win Ratio (%)</label>
+                            <input type="range" class="form-control" style="padding:0;" min="0" max="100" value="40">
+                            <small style="color: var(--text-muted)">Current: 40% (Balanced)</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Auto-Fill Empty Slots</label>
+                            <select class="form-control">
+                                <option>Enabled (After 10s)</option>
+                                <option>Enabled (Immediate)</option>
+                                <option>Disabled</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>Active Bots (Stored in App Memory)</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Bot Name</th><th>Difficulty</th><th>Current Room</th><th>Status</th></tr></thead>
+                            <tbody>
+                                <tr><td>Rayhan</td><td><span class="badge badge-danger">Hard</span></td><td>#RM_Live</td><td>Idle</td></tr>
+                                <tr><td>Arman</td><td><span class="badge badge-success">Easy</span></td><td>-</td><td>Idle</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-tournaments" class="section-view">
+                <div style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
+                    <button class="btn-sm btn-view" style="padding: 10px 20px;">+ Create Tournament</button>
+                </div>
+                <div class="card">
+                    <h3>Scheduled Tournaments</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Title</th><th>Entry Fee</th><th>Prize Pool</th><th>Start Time</th><th>Players</th><th>Status</th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td>Mega Ludo Cup</td>
+                                    <td>50 Coins</td>
+                                    <td>5000 Coins</td>
+                                    <td>Today, 08:00 PM</td>
+                                    <td>0/500</td>
+                                    <td><span class="badge badge-info">Registration Open</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-finance" class="section-view">
+                <div class="stats-grid">
+                    <div class="stat-card" style="border-left: 4px solid var(--warning)">
+                        <div class="stat-title">Pending Withdrawals</div>
+                        <div class="stat-value" id="fin-pending-with">0</div>
+                    </div>
+                    <div class="stat-card" style="border-left: 4px solid var(--success)">
+                        <div class="stat-title">Wallet Balance (Global)</div>
+                        <div class="stat-value" id="fin-global-balance">0</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Deposit Requests (Incoming)</h3>
+                    <div class="table-responsive">
+                        <table id="deposit-table">
+                            <thead><tr><th>User</th><th>Method</th><th>Amount</th><th>TrxID</th><th>Action</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Withdrawal Requests (Outgoing)</h3>
+                    <div class="table-responsive">
+                        <table id="withdraw-table">
+                            <thead><tr><th>User</th><th>Method</th><th>Amount</th><th>To Number</th><th>Action</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-ledger" class="section-view">
+                <div class="card">
+                    <h3>Double Entry Ledger (System)</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Tx ID</th><th>Account Debit</th><th>Account Credit</th><th>Amount</th><th>Reference</th><th>Time</th></tr></thead>
+                            <tbody id="ledger-tbody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-users" class="section-view">
+                <!-- ADDED: MANUAL COIN DISTRIBUTION -->
+                <div class="card" style="border-color: var(--primary);">
+                    <h3><i class="fas fa-coins" style="color: var(--primary)"></i> Manual Coin Distribution</h3>
+                    <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 10px;">Enter User ID and Amount to manually add coins to wallet.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">User ID (Mobile / Username)</label>
+                            <input type="text" id="manual-user-id" class="form-control" placeholder="e.g., 017...">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Amount</label>
+                            <input type="number" id="manual-coin-amt" class="form-control" placeholder="0">
+                        </div>
+                    </div>
+                    <button class="btn-sm btn-view" onclick="adminAddCoins()">Add Coins Now</button>
+                </div>
+
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                        <input type="text" placeholder="Search User ID / Mobile..." class="form-control" style="width: 200px;">
+                    </div>
+                    <div class="table-responsive">
+                        <table id="users-table">
+                            <thead><tr><th>User</th><th>Mobile</th><th>Email</th><th>KYC</th><th>Action</th></tr></thead>
+                            <tbody id="users-tbody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-store" class="section-view">
+                <div class="form-grid">
+                    <div class="card">
+                        <h3>Item Manager</h3>
+                        <div class="form-group">
+                            <label class="form-label">Add New Item</label>
+                            <input type="text" class="form-control" placeholder="Item Name (e.g., Gold Dice)">
+                        </div>
+                        <button class="btn-sm btn-approve" style="width:100%">Add Item</button>
+                    </div>
+                    <div class="card">
+                        <h3>Send Notifications</h3>
+                        <textarea class="form-control" rows="3" placeholder="Message for all users..."></textarea>
+                        <button class="btn-sm btn-view" style="width:100%; margin-top:10px;">Send Push</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-support" class="section-view">
+                <div class="card">
+                    <h3>Support Tickets</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>Ticket ID</th><th>User</th><th>Subject</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody>
+                                <tr><td>#TK_001</td><td>User</td><td>Payment not added</td><td><span class="badge badge-warning">Open</span></td><td><button class="btn-sm btn-view">Reply</button></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-security" class="section-view">
+                <div class="card">
+                    <h3>Security Audit Logs</h3>
+                    <div class="log-terminal" style="height: 400px;">
+                        <div class="log-line"><span class="log-time">14:00</span> Admin login from IP 192.168.1.1</div>
+                        <div class="log-line"><span class="log-time">14:05</span> <span class="log-warn">System check: All modules operational</span></div>
+                        <div class="log-line"><span class="log-time">14:10</span> Payment Gateway Callback Verified</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-settings" class="section-view">
+                <div class="card">
+                    <h3>Payment Configuration (Synced with App.js)</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">Bkash Number</label>
+                            <input type="text" id="set-bkash" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nagad Number</label>
+                            <input type="text" id="set-nagad" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Rocket Number</label>
+                            <input type="text" id="set-rocket" class="form-control">
+                        </div>
+                    </div>
+                    <button class="login-btn" onclick="saveSettings()">Save Configuration</button>
+                </div>
+                <div class="card">
+                    <h3>Platform Control</h3>
+                    <div class="form-group" style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding-bottom:10px;">
+                        <span>Maintenance Mode</span>
+                        <input type="checkbox">
+                    </div>
+                    <div class="form-group" style="display:flex; justify-content:space-between;">
+                        <span>Allow New Registrations</span>
+                        <input type="checkbox" checked>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- HIDDEN APP CONTAINER (Required for App.js logic to reference elements) -->
+    <div id="app-container-wrapper">
+        <div id="message-overlay" style="position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:rgba(0,0,0,0.8); color:white; padding:20px; border-radius:10px; z-index:5000; pointer-events:none; opacity:0; transition:opacity 0.3s;"></div>
+        <div id="toast"></div>
+        
+        <!-- Game Board SVG (Placeholder, rendered by JS) -->
+        <svg id="ludo-board" viewBox="0 0 150 150" style="background:#222;"></svg>
+        
+        <!-- App Screens (Hidden structure for JS) -->
+        <div id="screen-login"></div>
+        <div id="screen-main"></div>
+        <div id="wallet-dashboard"></div>
+        <div id="game-screen"></div>
+        <div id="screen-matchmaking"></div>
+        <div id="screen-setup"></div>
+        
+        <!-- Modals -->
+        <div id="win-modal"></div>
+        <div id="modalOverlay"></div>
+    </div>
+
+    <script>
+        // ==========================================
+        // CONNECTED SYSTEM CORE (ADMIN LOGIC)
+        // ==========================================
+
+        /* ===============================
+           API CONFIG
+        =============================== */
+        const API_BASE = "https://ludo-9j3s.onrender.com";
+        let API_ONLINE = true;
+
+        async function checkAPI(){
+
+         try{
+           const res = await fetch(API_BASE + "/health");
+
+           if(!res.ok) throw new Error();
+
+           API_ONLINE = true;
+           console.log("API Connected ✅");
+
+         }catch{
+
+           API_ONLINE = false;
+           console.log("API Offline → Using LocalStorage ⚠️");
+
+         }
+
+        }
+
+        // Keys used by app.js
+        const STORAGE_KEY_USERS = 'ludo_users';
+        const STORAGE_KEY_STATE = 'ludoAppState';
+        
+        // Admin local state
+        let appData = {
+            users: [],
+            transactions: [],
+            config: { bkash: '', nagad: '', rocket: '' }
+        };
+
+        // --- Init ---
+        window.onload = async function() {
+
+           await checkAPI();
+
+           if(sessionStorage.getItem('adminAuth') === 'true' ||
+              sessionStorage.getItem('adminLoggedIn') === 'true') {
+               showPanel();
+           }
+
+           loadData();
+        };
+
+        async function loadData(){
+
+         if(API_ONLINE){
+
+           try{
+
+             const usersRes = await fetch(API_BASE + "/users");
+             appData.users = await usersRes.json();
+
+             const txRes = await fetch(API_BASE + "/transactions");
+             appData.transactions = await txRes.json();
+
+             const cfgRes = await fetch(API_BASE + "/config");
+             appData.config = await cfgRes.json();
+
+           }catch(err){
+
+             console.log("API failed → fallback local");
+             loadLocalData();
+
+           }
+
+         }else{
+
+           loadLocalData();
+
+         }
+
+         renderAll();
+        }
+
+        /* ---------- LOCAL FALLBACK ---------- */
+        function loadLocalData(){
+
+         const storedUsers = localStorage.getItem(STORAGE_KEY_USERS);
+         if(storedUsers){
+           appData.users = JSON.parse(storedUsers);
+         }
+
+         const storedState = localStorage.getItem(STORAGE_KEY_STATE);
+         if(storedState){
+           const state = JSON.parse(storedState);
+           appData.transactions = state.transactions || [];
+           appData.config = state.adminNumbers || {};
+         }
+
+        }
+
+        // --- Auth ---
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const pass = document.getElementById('admin-pass').value;
+            // App.js password is '1234'
+            if(pass === '1234') { 
+                // Set both session keys for compatibility
+                sessionStorage.setItem('adminAuth', 'true');
+                sessionStorage.setItem('adminLoggedIn', 'true');
+                showPanel();
+            } else {
+                alert('Access Denied');
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('adminAuth');
+            sessionStorage.removeItem('adminLoggedIn');
+            location.reload();
+        }
+
+        function showPanel() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'flex';
+            renderChart();
+        }
+
+        // --- UI Navigation ---
+        function switchView(view) {
+            document.querySelectorAll('.section-view').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + view).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            const titles = {
+                dashboard: 'Dashboard', live: 'Live Monitor', bots: 'Bot Engine', 
+                tournaments: 'Tournaments', finance: 'Finance Center', ledger: 'Accounting',
+                users: 'User Management', store: 'Store & Ads', support: 'Support Desk',
+                security: 'Security Logs', settings: 'Settings'
+            };
+            document.getElementById('page-title').innerText = titles[view];
+            if(window.innerWidth <= 768) toggleSidebar();
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+            document.getElementById('sidebar-overlay').classList.toggle('active');
+        }
+
+        // --- Feature: Admin Dice Control ---
+        function setAdminDice(num, btnElement) {
+            // Visual feedback
+            document.querySelectorAll('.dice-btn').forEach(b => b.classList.remove('active-force'));
+            btnElement.classList.add('active-force');
+            
+            // Set flag for App.js
+            localStorage.setItem('admin_dice_override', num);
+            
+            const statusText = document.getElementById('dice-status-text');
+            statusText.innerText = `Next roll forced to: ${num}`;
+            statusText.style.color = 'var(--warning)';
+            
+            // Auto clear visual after 5 seconds
+            setTimeout(() => {
+                if(document.getElementById('dice-status-text').innerText === `Next roll forced to: ${num}`) {
+                    document.getElementById('dice-status-text').innerText = "";
+                    btnElement.classList.remove('active-force');
+                }
+            }, 5000);
+        }
+
+        // --- Feature: Admin Manual Coin Add ---
+        async function adminAddCoins(){
+
+         const userId = document.getElementById('manual-user-id').value;
+         const amount = parseInt(document.getElementById('manual-coin-amt').value);
+
+         if(!userId || !amount){
+           alert("Enter User ID & Amount");
+           return;
+         }
+
+         if(API_ONLINE){
+
+           await fetch(API_BASE + "/addCoins",{
+             method:"POST",
+             headers:{'Content-Type':'application/json'},
+             body: JSON.stringify({userId,amount})
+           });
+
+           alert("Coins Added (API)");
+           loadData();
+
+         }else{
+
+           let appState = JSON.parse(localStorage.getItem(STORAGE_KEY_STATE));
+           appState.balance += amount;
+
+           localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(appState));
+
+           alert("Coins Added (Offline)");
+
+         }
+
+        }
+
+        // --- Rendering Logic ---
+        function renderAll() {
+            renderFinance();
+            renderUsers();
+            renderLedger();
+            renderSettings();
+            updateStats();
+        }
+
+        function renderFinance() {
+            // Deposits
+            const depTable = document.getElementById('deposit-table');
+            depTable.querySelector('tbody').innerHTML = '';
+            
+            // Withdraws
+            const withTable = document.getElementById('withdraw-table');
+            withTable.querySelector('tbody').innerHTML = '';
+
+            let pendingWith = 0;
+            let pendingDep = 0;
+
+            appData.transactions.forEach(t => {
+                if(t.status !== 'pending') return;
+
+                let userDisplay = "Unknown";
+                let infoDisplay = t.info || "";
+
+                if(t.type === 'deposit') {
+                    pendingDep++;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${userDisplay}</td>
+                        <td><span class="badge badge-info">${t.method ? t.method.toUpperCase() : 'N/A'}</span></td>
+                        <td style="color:#fff; font-weight:bold;">${t.amount}</td>
+                        <td style="font-size:11px;">${infoDisplay}</td>
+                        <td>
+                            <button class="btn-sm btn-approve" onclick="processTx(${t.id}, 'success')"><i class="fas fa-check"></i></button>
+                            <button class="btn-sm btn-reject" onclick="processTx(${t.id}, 'rejected')"><i class="fas fa-times"></i></button>
+                        </td>
+                    `;
+                    depTable.querySelector('tbody').appendChild(tr);
+                } 
+                else if (t.type === 'withdraw') {
+                    pendingWith++;
+                    const numberMatch = infoDisplay.match(/To: ([\d]+)/);
+                    const toNumber = numberMatch ? numberMatch[1] : "N/A";
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${userDisplay}</td>
+                        <td><span class="badge badge-warning">${t.method ? t.method.toUpperCase() : 'N/A'}</span></td>
+                        <td style="color:#fff; font-weight:bold;">${t.amount}</td>
+                        <td>${toNumber}</td>
+                        <td>
+                            <button class="btn-sm btn-approve" onclick="processTx(${t.id}, 'success')"><i class="fas fa-check"></i></button>
+                            <button class="btn-sm btn-reject" onclick="processTx(${t.id}, 'rejected')"><i class="fas fa-times"></i></button>
+                        </td>
+                    `;
+                    withTable.querySelector('tbody').appendChild(tr);
+                }
+            });
+
+            document.getElementById('fin-pending-with').innerText = pendingWith;
+        }
+
+        function renderLedger() {
+            const tbody = document.getElementById('ledger-tbody');
+            tbody.innerHTML = '';
+            appData.transactions.slice(0, 10).forEach(t => {
+                const tr = document.createElement('tr');
+                let debit = '-', credit = '-';
+                if(t.type === 'deposit') { credit = 'System'; debit = 'User'; }
+                else if(t.type === 'withdraw') { credit = 'User'; debit = 'System'; }
+                else if(t.type === 'game_win') { credit = 'System'; debit = 'User'; }
+                else if(t.type === 'game_loss') { credit = 'User'; debit = 'System'; }
+                else if(t.type === 'admin_bonus') { credit = 'Admin'; debit = 'User'; }
+
+                tr.innerHTML = `
+                    <td>#TX_${t.id.toString().slice(-4)}</td>
+                    <td>${debit}</td>
+                    <td>${credit}</td>
+                    <td>${t.amount}</td>
+                    <td>${t.type}</td>
+                    <td>${new Date(t.id).toLocaleTimeString()}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('users-tbody');
+            tbody.innerHTML = '';
+            appData.users.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><b>${u.name || 'User'}</b></td>
+                    <td>${u.mobile || 'N/A'}</td>
+                    <td>${u.email || 'N/A'}</td>
+                    <td><span class="badge badge-success">Active</span></td>
+                    <td>
+                        <button class="btn-sm btn-action">Edit</button>
+                        <button class="btn-sm btn-reject">Ban</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderSettings() {
+            document.getElementById('set-bkash').value = appData.config.bkash || '';
+            document.getElementById('set-nagad').value = appData.config.nagad || '';
+            document.getElementById('set-rocket').value = appData.config.rocket || '';
+        }
+
+        function updateStats() {
+            document.getElementById('dash-total-users').innerText = appData.users.length;
+            
+            const state = JSON.parse(localStorage.getItem(STORAGE_KEY_STATE));
+            const currentBalance = state ? state.balance : 0;
+            
+            document.getElementById('dash-sys-balance').innerText = currentBalance;
+            document.getElementById('fin-global-balance').innerText = currentBalance;
+
+            const pendingTx = appData.transactions.filter(t => t.status === 'pending').length;
+            document.getElementById('dash-pending-tx').innerText = pendingTx;
+
+            const revenue = appData.transactions
+                .filter(t => t.type === 'deposit' && t.status === 'success')
+                .reduce((sum, t) => sum + t.amount, 0);
+            document.getElementById('dash-revenue').innerText = revenue;
+        }
+
+        // --- CRITICAL SYNC FUNCTION ---
+        async function processTx(id, status){
+
+         if(API_ONLINE){
+
+           await fetch(API_BASE + "/process",{
+             method:"POST",
+             headers:{'Content-Type':'application/json'},
+             body: JSON.stringify({ id, status })
+           });
+
+           // Reload transactions from API
+           await loadData();
+
+           alert("Updated via API");
+
+         }else{
+
+           const tx = appData.transactions.find(t=>t.id===id);
+           if(tx) tx.status = status;
+
+           renderAll();
+           alert("Updated Offline");
+
+         }
+
+        }
+
+        async function saveSettings(){
+
+         const bkash = document.getElementById('set-bkash').value;
+         const nagad = document.getElementById('set-nagad').value;
+         const rocket = document.getElementById('set-rocket').value;
+
+         const data = { bkash, nagad, rocket };
+
+         if(API_ONLINE){
+
+           await fetch(API_BASE + "/config",{
+             method:"POST",
+             headers:{'Content-Type':'application/json'},
+             body: JSON.stringify(data)
+           });
+
+           alert("Saved (API)");
+
+         }else{
+
+           let appState = JSON.parse(localStorage.getItem(STORAGE_KEY_STATE));
+           appState.adminNumbers = data;
+
+           localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(appState));
+
+           alert("Saved (Offline)");
+
+         }
+
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Revenue',
+                        data: [120, 190, 300, 500, 200, 300, 450],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+        }
+
+        setInterval(() => {
+            const logDiv = document.getElementById('dice-log');
+            const msgs = ["Server heartbeat...", "Database sync...", "Validating session...", "Checking gateway...", "Optimizing assets..."];
+            const randomMsg = msgs[Math.floor(Math.random() * msgs.length)];
+            const line = document.createElement('div');
+            line.className = 'log-line';
+            line.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString()}</span> ${randomMsg}`;
+            logDiv.prepend(line);
+            if(logDiv.children.length > 20) logDiv.lastChild.remove();
+        }, 5000);
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            if(t) {
+                t.innerText = msg;
+                t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), 3000);
+            }
+        }
+
+        function showMessage(msg) {
+            const el = document.getElementById('message-overlay'); 
+            if(el) {
+                el.innerText = msg; 
+                el.style.opacity =1;
+                setTimeout(() => el.style.opacity = 0, 1500);
+            }
+        }
+
+
+        // ==========================================
+        // APP.JS LOGIC (GAME + WALLET)
+        // ==========================================
+
+        // --- Navigation (App) ---
+        function showScreen(screenId) {
+            // Hidden wrapper logic handled by Admin
+        }
+        function goHome() {
+            document.getElementById('win-modal').style.display = 'none';
+            showScreen('screen-main');
+        }
+        function showLoginScreen() {
+            showScreen('screen-login');
+        }
+        function showRegisterScreen() {
+            showScreen('screen-register');
+        }
+        function goToWalletDashboard() {
+            showScreen('wallet-dashboard');
+            if(typeof updateUI === 'function') updateUI();
+            if(typeof renderHistory === 'function') renderHistory();
+        }
+        function goToSetup() {
+            showScreen('screen-setup');
+            setMode(2);     
+        }
+        function openSettingsModal() {
+            const modal = document.getElementById('modalOverlay');
+            if(modal) modal.style.display = 'flex';
+        }
+        function closeModal() {
+            const modal = document.getElementById('modalOverlay');
+            if(modal) modal.style.display = 'none';
+        }
+        function toggleSwitch(element) {
+            element.classList.toggle('active');
+            const label = element.parentElement.querySelector('.setting-label').innerText;
+            const status = element.classList.contains('active') ? 'ON' : 'OFF';
+            console.log(`${label} is now ${status}`);
+        }
+        function togglePassword(inputId, iconElement) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                iconElement.style.fill = "#00d4ff"; 
+            } else {
+                input.type = "password";
+                iconElement.style.fill = "#777";
+            }
+        }
+
+        // --- Game Logic Variables ---
+        const colors = ['red', 'green', 'yellow', 'blue'];
+        const colorNames = {'red': 'লাল', 'green': 'সবুজ', 'yellow': 'হলুদ', 'blue': 'নীল'};
+        let players = []; 
+        let playerTurnIndex = 0; 
+        let gameMode = 'offline'; 
+        let boardState = {};     
+        let isRolling = false; 
+        let turnPhase = 'roll';     
+        let consecutiveSixes = 0; 
+        let diceValue = 1;    
+        let isBonusTurn = false; 
+        let isGameInProgress = false;
+        let isGameResultProcessed = false;
+        const currentUserID = "player_local_1"; 
+        const CELL_SIZE = 10; 
+        const safeCells = [0, 8, 13, 21, 26, 34, 39, 47];
+
+        const mainPath = [
+            {x:1,y:6},{x:2,y:6},{x:3,y:6},{x:4,y:6},{x:5,y:6},{x:6,y:5},{x:6,y:4},{x:6,y:3},{x:6,y:2},{x:6,y:1},{x:6,y:0},{x:7,y:0},{x:8,y:0},
+            {x:8,y:1},{x:8,y:2},{x:8,y:3},{x:8,y:4},{x:8,y:5},{x:9,y:6},{x:10,y:6},{x:11,y:6},{x:12,y:6},{x:13,y:6},{x:14,y:6},{x:14,y:7},{x:14,y:8},
+            {x:13,y:8},{x:12,y:8},{x:11,y:8},{x:10,y:8},{x:9,y:8},{x:8,y:9},{x:8,y:10},{x:8,y:11},{x:8,y:12},{x:8,y:13},{x:8,y:14},{x:7,y:14},{x:6,y:14},
+            {x:6,y:13},{x:6,y:12},{x:6,y:11},{x:6,y:10},{x:6,y:9},{x:5,y:8},{x:4,y:8},{x:3,y:8},{x:2,y:8},{x:1,y:8},{x:0,y:8},{x:0,y:7},{x:0,y:6}
+        ];
+        const homePaths = {
+            red:    [{x:1,y:7},{x:2,y:7},{x:3,y:7},{x:4,y:7},{x:5,y:7},{x:6,y:7}],
+            green:  [{x:7,y:1},{x:7,y:2},{x:7,y:3},{x:7,y:4},{x:7,y:5},{x:7,y:6}],
+            yellow: [{x:13,y:7},{x:12,y:7},{x:11,y:7},{x:10,y:7},{x:9,y:7},{x:8,y:7}],
+            blue:   [{x:7,y:13},{x:7,y:12},{x:7,y:11},{x:7,y:10},{x:7,y:9},{x:7,y:8}]
+        };
+        const basePositions = {
+            red:    [{x:1.5,y:1.5},{x:1.5,y:3.5},{x:3.5,y:1.5},{x:3.5,y:3.5}],
+            green:  [{x:10.5,y:1.5},{x:10.5,y:3.5},{x:12.5,y:1.5},{x:12.5,y:3.5}],
+            yellow: [{x:10.5,y:10.5},{x:10.5,y:12.5},{x:12.5,y:10.5},{x:12.5,y:12.5}],
+            blue:   [{x:1.5,y:10.5},{x:1.5,y:12.5},{x:3.5,y:10.5},{x:3.5,y:12.5}]
+        };
+        const startIndices = { red: 0, green: 13, yellow: 26, blue: 39 };
+
+        const AI_NAMES_POOL = ["Rayhan", "Faruk", "Arman", "Rahul", "Sani", "Rashed"];
+        function getRandomAIName() {
+            if (AI_NAMES_POOL.length === 0) return "Bot " + Math.floor(Math.random()*1000);
+            const randomIndex = Math.floor(Math.random() * AI_NAMES_POOL.length);
+            const name = AI_NAMES_POOL[randomIndex];
+            AI_NAMES_POOL.splice(randomIndex,1);
+            return name;
+        }
+        function resetAINames() {
+            AI_NAMES_POOL.length = 0; 
+            ["Rayhan", "Faruk", "Arman", "Rahul", "Sani", "Rashed"].forEach(n => AI_NAMES_POOL.push(n));
+        }
+
+        let onlineTurnTimer = null;
+        const TURN_TIME_LIMIT = 25;
+        function stopOnlineTimer() {
+            if (onlineTurnTimer) clearInterval(onlineTurnTimer);
+            onlineTurnTimer = null;
+            document.querySelectorAll('.turn-timer').forEach(el => el.style.display = 'none');
+        }
+        function startOnlineTimer(color) {
+            stopOnlineTimer();
+            if (gameMode !== 'vsAI') return;
+            const timerEl = document.getElementById(`timer-display-${color}`);
+            if (timerEl) {
+                timerEl.style.display = 'flex';
+                let timeLeft = TURN_TIME_LIMIT;
+                timerEl.innerText = timeLeft;
+                onlineTurnTimer = setInterval(() => {
+                    timeLeft--;
+                    timerEl.innerText = timeLeft;
+                    if (timeLeft <= 0) {
+                        stopOnlineTimer();
+                        if (turnPhase === 'roll' && !isRolling) performRoll();
+                    }
+                }, 1000);
+            }
+        }
+
+        // AI Memory
+        const AI_Memory = {
+            profiles: {},
+            load: function() { const stored = localStorage.getItem('ludo_pro_ai_memory'); if (stored) this.profiles = JSON.parse(stored); },
+            save: function() { localStorage.setItem('ludo_pro_ai_memory', JSON.stringify(this.profiles)); },
+            initProfile: function(playerId) {
+                this.load();
+                if (!this.profiles[playerId]) {
+                    this.profiles[playerId] = { id: playerId, wins: 0, losses: 0, totalGames: 0, kills: 0, deaths: 0, mistakes: 0, aggressionScore: 50, skillLevel: 'New' };
+                    this.save();
+                }
+                return this.profiles[playerId];
+            },
+            updateProfile: function(playerId, result, data = {}) {
+                const p = this.initProfile(playerId);
+                p.totalGames++;
+                if (result === 'win') p.wins++; else if (result === 'lose') p.losses++;
+                if (data.kill) p.kills++;
+                if (data.death) p.deaths++;
+                if (data.kill) p.aggressionScore = Math.min(100, p.aggressionScore + 3);
+                if (data.death) p.aggressionScore = Math.max(0, p.aggressionScore - 2);
+                const MIN_GAMES_FOR_NEMESIS = 8;
+                const total = p.wins + p.losses;
+                const winRate = total > 0 ? p.wins / total : 0;
+                if (p.skillLevel !== 'Nemesis') {
+                    if (winRate >= 0.6) p.skillLevel = 'Pro';
+                    else if (winRate >= 0.35) p.skillLevel = 'Medium';
+                    else p.skillLevel = 'New';
+                }
+                if (total >= MIN_GAMES_FOR_NEMESIS && winRate >= 0.7 && p.kills >= p.deaths + 3) p.skillLevel = 'Nemesis';
+                if (p.skillLevel === 'Nemesis' && winRate < 0.55) p.skillLevel = 'Pro';
+                this.save();
+            },
+            getAnalysis: function(playerId) {
+                this.load();
+                const p = this.profiles[playerId];
+                if (!p) return { skill: 'New', aggression: 50, nemesis: false };
+                return { skill: p.skillLevel, aggression: p.aggressionScore, nemesis: (p.skillLevel === 'Nemesis') };
+            }
+        };
+        AI_Memory.load();
+        AI_Memory.initProfile(currentUserID);
+
+        const AI_PERSONALITY = {
+            red: { aggressionBias:1.3, riskBias: 0.8, safeBias: 0.7 },
+            green: { aggressionBias: 0.7, riskBias: 1.4, safeBias: 1.5 },
+            yellow: { aggressionBias: 1.0, riskBias: 1.0, safeBias: 1.0 },
+            blue: { aggressionBias: 1.1, riskBias: 1.0, safeBias: 0.9 }
+        };
+
+        // --- Board Rendering (Simplified for hidden wrapper) ---
+        function initBoard() {
+            const svg = document.getElementById('ludo-board');
+            if(!svg) return;
+            // ... Minimal SVG setup to prevent crashes if board is shown ...
+            // (Full SVG logic is complex, assuming it runs in hidden container or if visible)
+        }
+
+        function createDiceSVG(num, color) {
+             // Simplified Dice Generation for Admin compatibility
+             return `<div style="width:40px;height:40px;background:${color==='red'?'#ef4444':color==='blue'?'#3b82f6':'#eab308'};color:white;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:bold;border:2px solid #fff">${num}</div>`;
+        }
+
+        function startGame(mode, count) {
+            gameMode = mode;
+            if (!count || count < 2 || count > 4) count = 2;
+            isBonusTurn = false; 
+            isGameInProgress = true;
+            isGameResultProcessed = false;
+
+            if (mode === 'vsAI') {
+                players = count === 2 ? ['red', 'yellow'] : count === 3 ? ['red', 'green', 'yellow'] : colors;
+            } else if (mode === 'offline') {
+                players = count === 2 ? ['red', 'yellow'] : count === 3 ? ['red', 'green', 'yellow'] : colors;
+            }
+
+            boardState = {};     
+            players.forEach(p => {
+                boardState[p] = Array.from({length:4}, (_,i)=>({id:i, pos:-1, status:'base', justSpawned: false}));
+            });
+            
+            // If game screen was visible, init board, else just logic is ready
+            if(document.getElementById('game-screen').style.display !== 'none') {
+                // initBoard();
+                // createPlayerHubs();
+            }
+            
+            playerTurnIndex = 0; 
+            turnPhase = 'roll'; 
+            consecutiveSixes = 0; 
+            
+            if(isCurrentPlayerAI()) setTimeout(aiTurn, 1000);
+        }
+
+        function createPlayerHubs() {
+            // Logic for creating UI if game is visible
+        }
+
+        function updateTurnUI() {
+            stopOnlineTimer();
+            // Logic for updating UI if game is visible
+            if (gameMode === 'vsAI' && !isCurrentPlayerAI()) {
+                // startOnlineTimer(players[playerTurnIndex]);
+            }
+        }
+
+        function handleRoll(color) {
+            if (turnPhase !== 'roll' || color !== players[playerTurnIndex] || isRolling) return;
+            if (isCurrentPlayerAI()) return;
+            performRoll();
+        }
+
+        // --- MODIFIED PERFORM ROLL WITH DICE CONTROL ---
+        function performRoll() {
+            stopOnlineTimer();
+            isRolling = true;     
+            const currentColor = players[playerTurnIndex];
+            
+            // Admin Dice Override Logic
+            const override = localStorage.getItem('admin_dice_override');
+            if (override) {
+                diceValue = parseInt(override);
+                localStorage.removeItem('admin_dice_override'); // Consume
+                
+                // Log override
+                const logDiv = document.getElementById('dice-log');
+                if(logDiv) {
+                    const line = document.createElement('div');
+                    line.className = 'log-line';
+                    line.innerHTML = `<span class="log-time">${new Date().toLocaleTimeString()}</span> <span class="log-warn">ADMIN OVERRIDE: Forced to ${diceValue}</span>`;
+                    logDiv.prepend(line);
+                }
+            } else {
+                // Normal Random Logic
+                if (isBonusTurn) {
+                    diceValue = Math.floor(Math.random() * 5) + 1; // 1-5 on bonus
+                    isBonusTurn = false; 
+                } else {
+                    diceValue = Math.floor(Math.random() * 6) + 1;
+                    if (diceValue === 6) {
+                        isBonusTurn = true;
+                    }
+                }
+            }
+
+            console.log(`Rolled: ${diceValue}`);
+            finalizeRoll();
+        }
+
+        function finalizeRoll() {
+            const currentColor = players[playerTurnIndex];
+            if (diceValue === 6) {
+                consecutiveSixes++;
+                if (consecutiveSixes === 3) {
+                    showMessage("টানা ৩ বার ৬! চাল বাতিল");
+                    consecutiveSixes = 0;
+                    isBonusTurn = false; 
+                    setTimeout(nextTurn, 800);     
+                    isRolling = false;     
+                    return;
+                }
+            } else {
+                consecutiveSixes = 0;
+            }
+            const tokens = boardState[currentColor];
+            const movableTokens = tokens.filter(t => {
+                if (t.status === 'finished') return false;
+                if (t.status === 'base') return diceValue === 6;
+                return t.pos + diceValue <= 56;
+            });
+            if (movableTokens.length === 0) {
+                showMessage("কোনো চাল নেই");
+                setTimeout(nextTurn, 800);
+            } else {
+                turnPhase = 'move';
+                // Logic to move tokens would go here in full UI
+                if(isCurrentPlayerAI()) {
+                    const delay = Math.random() * 1000 + 500;
+                    setTimeout(() => aiMove(movableTokens), delay);
+                } else {
+                    // User Move Logic (Hidden in Admin context)
+                }
+            }
+            isRolling = false;
+        }
+
+        function nextTurn() {     
+            playerTurnIndex = (playerTurnIndex + 1) % players.length;     
+            turnPhase = 'roll'; consecutiveSixes = 0; isBonusTurn = false; 
+            updateTurnUI();     
+            if(isCurrentPlayerAI()) setTimeout(aiTurn, 1000);     
+        }
+
+        function isCurrentPlayerAI() {     
+            if (gameMode === 'vsAI') return players[playerTurnIndex] !== 'yellow';
+            return false; 
+        }
+                
+        function aiTurn() {     
+            if (isRolling || turnPhase !== 'roll') return;    
+            performRoll();     
+        }
+
+        function aiMove(movableTokens) {
+            // Simplified AI Move Logic
+            if(movableTokens.length > 0) {
+                const chosenToken = movableTokens[0]; // Simple logic
+                // moveToken logic would go here
+            }
+            nextTurn();
+        }
+        
+        function checkWinCondition(color) {
+            // Logic to handle Win
+        }
+
+        function finishGameSession() {
+            // Logic to return to dashboard
+        }
+
+        function playSound(type) {
+            // Placeholder for sound
+        }
+
+        function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+
+        // ==========================================
+        // PART 2: WALLET JS
+        // ==========================================
+
+        /* ===============================
+           LOAD DATA FROM API
+        =============================== */
+        async function loadAPIData(){
+
+         if(!API_ONLINE) return;
+
+         const res = await fetch(API_BASE + "/transactions");
+         const data = await res.json();
+
+         appState.transactions = data;
+
+         let balance = 0;
+
+         data.forEach(t=>{
+           if(t.status === "success"){
+             if(t.type === "deposit") balance += t.amount;
+             if(t.type === "withdraw") balance -= t.amount;
+           }
+         });
+
+         appState.balance = balance;
+
+         updateUI();
+         renderHistory();
+        }
+
+        const defaultState = {
+            balance: 0,
+            wins: 0,
+            losses: 0,
+            adminNumbers: {
+                bkash: "01710814750",
+                nagad: "01710814750",
+                rocket: "01710814750"
+            },
+            transactions: []
+        };
+
+        let appState = JSON.parse(localStorage.getItem('ludoAppState'));
+        if (!appState) {
+            appState = defaultState;
+        } else {
+            if (!appState.adminNumbers && appState.adminNumber) {
+                appState.adminNumbers = {
+                    bkash: appState.adminNumber,
+                    nagad: appState.adminNumber,
+                    rocket: appState.adminNumber
+                };
+                delete appState.adminNumber;
+            } else if (!appState.adminNumbers) {
+                appState.adminNumbers = defaultState.adminNumbers;
+            }
+        }
+
+        let currentBet = 100;
+        let selectedPaymentMethod = 'bkash'; 
+
+        function saveState() {
+            localStorage.setItem('ludoAppState', JSON.stringify(appState));
+        }
+
+        async function requestDeposit(){
+
+         const num = document.getElementById('dep-number').value;
+         const amount = parseInt(document.getElementById('dep-amount').value);
+         const trx = document.getElementById('dep-trx').value;
+
+         if(!num || !amount || !trx){
+           showToast('Fill all fields');
+           return;
+         }
+
+         if(API_ONLINE){
+
+           await fetch(API_BASE + "/deposit",{
+             method:"POST",
+             headers:{'Content-Type':'application/json'},
+             body: JSON.stringify({
+               amount: amount,
+               method: selectedPaymentMethod,
+               info: `Trx: ${trx} (${num})`
+             })
+           });
+
+           showToast("Deposit Sent");
+           loadAPIData();
+
+         }else{
+
+           addTransaction('deposit', amount, 'pending', `Trx: ${trx}`, selectedPaymentMethod);
+           saveState();
+
+         }
+
+        }
+
+        function addTransaction(type, amount, status, info, method) {
+            appState.transactions.unshift({
+                id: Date.now(),
+                type: type,
+                amount: amount,
+                status: status,
+                info: info,
+                method: method,
+                date: new Date().toLocaleString('en-US')
+            });
+        }
+
+        async function requestWithdraw(){
+
+         const num = document.getElementById('with-number').value;
+         const amount = parseInt(document.getElementById('with-amount').value);
+
+         if(!num || !amount){
+           showToast('Fill all fields');
+           return;
+         }
+
+         if(API_ONLINE){
+
+           await fetch(API_BASE + "/withdraw",{
+             method:"POST",
+             headers:{'Content-Type':'application/json'},
+             body: JSON.stringify({
+               amount,
+               method: selectedPaymentMethod,
+               info:`To: ${num}`
+             })
+           });
+
+           showToast("Withdraw Sent");
+           loadAPIData();
+
+         }else{
+
+           appState.balance -= amount;
+           addTransaction('withdraw', amount, 'pending', `To: ${num}`, selectedPaymentMethod);
+           saveState();
+
+         }
+
+        }
+
+        window.addEventListener('load', () => {
+           saveState();
+           loadAPIData();
+        });
+
+    </script>
+</body>
+  </html>
