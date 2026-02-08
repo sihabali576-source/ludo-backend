@@ -119,8 +119,77 @@ function startOnlineMatch() {
     
     findOpponent();
 }
-
 function findOpponent() {
+    const userName = localStorage.getItem('ludo_user_name') || 'Player';
+    
+    // ১. প্রথমে কিউ (Queue) তে নিজেকে যোগ করা
+    const myQueueRef = db.ref('matchmaking/' + onlineBetAmount + '/' + currentUser.uid);
+    
+    myQueueRef.set({
+        name: userName,
+        id: currentUser.uid,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    });
+
+    // ২. চেক করা অন্য কেউ লাইনে আছে কিনা
+    const queueRef = db.ref('matchmaking/' + onlineBetAmount);
+    
+    queueRef.on('value', function(snapshot) {
+        const players = snapshot.val();
+        if (!players) return;
+        
+        const playerIds = Object.keys(players);
+        
+        // যদি কমপক্ষে ২ জন থাকে
+        if (playerIds.length >= 2) {
+            // অন্য প্লেয়ারের আইডি বের করা
+            const opponentId = playerIds.find(id => id !== currentUser.uid);
+            
+            if (opponentId) {
+                // লিসেনার বন্ধ করা যাতে বারবার ম্যাচ না হয়
+                queueRef.off();
+                
+                // ম্যাচ পাওয়া গেছে!
+                showOpponentFound(players[opponentId].name);
+                
+                // গেম রুম তৈরি করা (একই রুমে দুজনকে পাঠানো)
+                // রুম আইডি হবে দুজনের আইডির যোগফল (যাতে আইডি ইউনিক থাকে)
+                const roomIDSuffix = [currentUser.uid, opponentId].sort().join("_");
+                const roomId = "room_" + roomIDSuffix;
+                
+                setTimeout(function() {
+                    myQueueRef.remove(); // কিউ থেকে নিজেকে মোছা
+                    joinOnlineGameRoom(roomId, onlineBetAmount, currentUser.uid, opponentId);
+                }, 1500);
+            }
+        }
+    });
+}
+
+function joinOnlineGameRoom(roomId, betAmount, myId, oppId) {
+    currentRoomId = roomId;
+    currentRoomRef = db.ref('games/' + roomId);
+    
+    const isYellow = myId < oppId; // ছোট আইডি সব সময় ইয়োলো হবে
+    myPlayerColor = isYellow ? 'yellow' : 'red';
+    
+    // প্রথম প্লেয়ার রুম ডেটা সেট করবে
+    if (isYellow) {
+        const winPrize = Math.floor(betAmount * 2 * 0.95);
+        currentRoomRef.set({
+            roomId: roomId,
+            bet: betAmount,
+            prize: winPrize,
+            status: 'playing',
+            players: { yellow: myId, red: oppId },
+            turn: 'yellow',
+            dice: 0,
+            board: { yellow: [-1, -1, -1, -1], red: [-1, -1, -1, -1] }
+        });
+    }
+    
+    setTimeout(() => startOnlineGame(roomId), 1000);
+ function findOpponent() {
     const userName = localStorage.getItem('ludo_user_name') || 'Player';
     const oddhavatar = 'https://api.dicebear.com/9.x/avataaars/svg?seed=' + currentUser.uid;
     
